@@ -29,15 +29,14 @@ function initializeDatabase() {
     db.run(`CREATE TABLE IF NOT EXISTS users (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
       service_number TEXT UNIQUE NOT NULL,
-      username TEXT UNIQUE NOT NULL,
-      password TEXT NOT NULL,
+      password_hash TEXT NOT NULL,
       full_name TEXT NOT NULL,
       role TEXT NOT NULL CHECK(role IN ('Admin', 'Investigator', 'Commander', 'Data Entry')),
       unit TEXT,
       station TEXT,
       email TEXT,
       phone TEXT,
-      status TEXT DEFAULT 'active' CHECK(status IN ('active', 'inactive')),
+      is_active INTEGER DEFAULT 1,
       created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
       last_login DATETIME
     )`);
@@ -118,8 +117,8 @@ function initializeDatabase() {
 
     // Create default admin user
     const defaultPassword = bcrypt.hashSync('admin123', 10);
-    db.run(`INSERT OR IGNORE INTO users (service_number, username, password, full_name, role, station) 
-            VALUES ('RNP001', 'admin', ?, 'System Administrator', 'Admin', 'HQ')`, [defaultPassword]);
+    db.run(`INSERT OR IGNORE INTO users (service_number, password_hash, full_name, role, station) 
+            VALUES ('admin', ?, 'System Administrator', 'Admin', 'HQ')`, [defaultPassword]);
 
     console.log('Database initialized successfully');
   });
@@ -131,8 +130,8 @@ function initializeDatabase() {
 app.post('/api/login', (req, res) => {
   const { username, password } = req.body;
 
-  db.get('SELECT * FROM users WHERE (username = ? OR service_number = ?) AND status = "active"', 
-    [username, username], 
+  db.get('SELECT * FROM users WHERE service_number = ? AND is_active = 1', 
+    [username], 
     async (err, user) => {
       if (err) {
         return res.status(500).json({ error: 'Database error' });
@@ -141,7 +140,7 @@ app.post('/api/login', (req, res) => {
         return res.status(401).json({ error: 'Invalid credentials' });
       }
 
-      const validPassword = await bcrypt.compare(password, user.password);
+      const validPassword = await bcrypt.compare(password, user.password_hash);
       if (!validPassword) {
         return res.status(401).json({ error: 'Invalid credentials' });
       }
@@ -153,7 +152,7 @@ app.post('/api/login', (req, res) => {
         success: true,
         user: {
           id: user.id,
-          username: user.username,
+          service_number: user.service_number,
           fullName: user.full_name,
           role: user.role,
           station: user.station
@@ -371,7 +370,7 @@ app.get('/api/stats/by-type', (req, res) => {
 
 // Get all users
 app.get('/api/users', (req, res) => {
-  db.all(`SELECT id, service_number, username, full_name, role, unit, station, email, phone, status, created_at 
+  db.all(`SELECT id, service_number, full_name, role, unit, station, email, phone, is_active, created_at 
           FROM users ORDER BY full_name`, 
     (err, rows) => {
       if (err) {
@@ -383,13 +382,13 @@ app.get('/api/users', (req, res) => {
 
 // Create user
 app.post('/api/users', async (req, res) => {
-  const { service_number, username, password, full_name, role, unit, station, email, phone } = req.body;
+  const { service_number, password, full_name, role, unit, station, email, phone } = req.body;
   
   const hashedPassword = await bcrypt.hash(password, 10);
   
-  db.run(`INSERT INTO users (service_number, username, password, full_name, role, unit, station, email, phone) 
-          VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-    [service_number, username, hashedPassword, full_name, role, unit, station, email, phone],
+  db.run(`INSERT INTO users (service_number, password_hash, full_name, role, unit, station, email, phone) 
+          VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
+    [service_number, hashedPassword, full_name, role, unit, station, email, phone],
     function(err) {
       if (err) {
         return res.status(500).json({ error: 'Failed to create user' });
