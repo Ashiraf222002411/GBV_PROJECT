@@ -789,7 +789,7 @@
           <div class="form-grid">
             <div class="form-group">
               <label>Select Case</label>
-              <select id="inv-case-select">
+              <select id="inv-case-select" onchange="loadInvTimeline(this.value)">
                 <option value="">Choose a case...</option>
               </select>
             </div>
@@ -824,15 +824,15 @@
           <div class="form-grid three">
             <div class="form-group">
               <label>Assigned Investigator</label>
-              <input type="text" placeholder="Officer name & ID">
+              <input type="text" id="inv-investigator" placeholder="Officer name & ID">
             </div>
             <div class="form-group">
               <label>Next Action Date</label>
-              <input type="date">
+              <input type="date" id="inv-next-action-date">
             </div>
             <div class="form-group">
               <label>Evidence Reference</label>
-              <input type="text" placeholder="File / exhibit ref number">
+              <input type="text" id="inv-evidence-ref" placeholder="File / exhibit ref number">
             </div>
           </div>
           <div style="display:flex;gap:12px;justify-content:flex-end;margin-top:8px;">
@@ -844,21 +844,7 @@
         <div class="card-header"><div class="card-title">Investigation History</div></div>
         <div class="card-body">
           <div class="timeline" id="inv-timeline">
-            <div class="timeline-item">
-              <div class="timeline-dot"></div>
-              <div class="timeline-time">2025-11-02 · 09:30 · Insp. Osei</div>
-              <div class="timeline-text">Case opened. Survivor statement recorded. Medical referral issued to CHUK Hospital.</div>
-            </div>
-            <div class="timeline-item">
-              <div class="timeline-dot"></div>
-              <div class="timeline-time">2025-11-05 · 14:10 · Insp. Osei</div>
-              <div class="timeline-text">Suspect identified and located in Gasabo District. Arrest warrant requested from court.</div>
-            </div>
-            <div class="timeline-item">
-              <div class="timeline-dot"></div>
-              <div class="timeline-time">2025-11-08 · 11:00 · Sgt. Muhire</div>
-              <div class="timeline-text">Suspect arrested and brought in for questioning. Evidence (photos, medical report) submitted to dossier.</div>
-            </div>
+            <p style="color:var(--muted);font-size:13px;">Select a case above to view investigation history.</p>
           </div>
         </div>
       </div>
@@ -1629,22 +1615,61 @@ async function updateCase(e) {
 function populateInvSelect() {
   const sel = document.getElementById('inv-case-select');
   if (!sel) return;
-  
-  sel.innerHTML = '<option value="">Choose a case...</option>' + CASES.map(c => `<option value="${c.id}">${c.id} — ${c.type} (${c.district})</option>`).join('');
+  sel.innerHTML = '<option value="">Choose a case...</option>' + CASES.map(c => `<option value="${c.rawData.id}">${c.id} — ${c.type} (${c.district})</option>`).join('');
 }
 
-function addInvLog() {
+async function loadInvTimeline(caseId) {
+  const timeline = document.getElementById('inv-timeline');
+  if (!caseId) {
+    timeline.innerHTML = '<p style="color:var(--muted);font-size:13px;">Select a case above to view investigation history.</p>';
+    return;
+  }
+  timeline.innerHTML = '<p style="color:var(--muted);font-size:13px;">Loading...</p>';
+  try {
+    const logs = await apiCall(`/cases/${caseId}/investigation-logs`);
+    if (!logs.length) {
+      timeline.innerHTML = '<p style="color:var(--muted);font-size:13px;">No investigation updates yet for this case.</p>';
+      return;
+    }
+    timeline.innerHTML = logs.map(log => {
+      const dt = new Date(log.created_at);
+      const ts = `${dt.getFullYear()}-${String(dt.getMonth()+1).padStart(2,'0')}-${String(dt.getDate()).padStart(2,'0')} · ${String(dt.getHours()).padStart(2,'0')}:${String(dt.getMinutes()).padStart(2,'0')} · ${log.user_name || 'Unknown'}`;
+      return `<div class="timeline-item">
+        <div class="timeline-dot"></div>
+        <div class="timeline-time">${ts}</div>
+        <div class="timeline-text">${log.action_taken}${log.evidence_ref ? ` <span style="color:var(--muted);font-size:11px;">[Ref: ${log.evidence_ref}]</span>` : ''}</div>
+      </div>`;
+    }).join('');
+  } catch (err) {
+    timeline.innerHTML = '<p style="color:var(--danger);font-size:13px;">Failed to load timeline.</p>';
+  }
+}
+
+async function addInvLog() {
+  const caseId = document.getElementById('inv-case-select').value;
+  if (!caseId) { alert('Please select a case first.'); return; }
   const note = document.getElementById('inv-note').value;
   if (!note.trim()) { alert('Please enter an investigation update.'); return; }
-  const timeline = document.getElementById('inv-timeline');
-  const now = new Date();
-  const ts = `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}-${String(now.getDate()).padStart(2,'0')} · ${String(now.getHours()).padStart(2,'0')}:${String(now.getMinutes()).padStart(2,'0')} · Insp. Osei`;
-  const item = document.createElement('div');
-  item.className = 'timeline-item';
-  item.innerHTML = `<div class="timeline-dot" style="background:var(--gold);"></div><div class="timeline-time">${ts}</div><div class="timeline-text">${note}</div>`;
-  timeline.prepend(item);
-  document.getElementById('inv-note').value = '';
-  alert('✅ Investigation update saved successfully!');
+
+  const payload = {
+    user_id: currentUser.id,
+    action_taken: note.trim(),
+    evidence_ref: document.getElementById('inv-evidence-ref').value.trim() || null,
+    next_action_date: document.getElementById('inv-next-action-date').value || null,
+    assigned_investigator: document.getElementById('inv-investigator').value.trim() || null
+  };
+
+  try {
+    await apiCall(`/cases/${caseId}/investigation-logs`, 'POST', payload);
+    document.getElementById('inv-note').value = '';
+    document.getElementById('inv-evidence-ref').value = '';
+    document.getElementById('inv-next-action-date').value = '';
+    document.getElementById('inv-investigator').value = '';
+    await loadInvTimeline(caseId);
+    alert('✅ Investigation update saved successfully!');
+  } catch (err) {
+    alert('❌ Failed to save update. Please try again.');
+  }
 }
 
 // ── CASE SUBMIT ───────────────────────────────────────────────────

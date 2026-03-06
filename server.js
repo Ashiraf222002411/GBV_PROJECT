@@ -115,6 +115,20 @@ function initializeDatabase() {
       FOREIGN KEY (referred_by) REFERENCES users(id)
     )`);
 
+    // Investigation logs table
+    db.run(`CREATE TABLE IF NOT EXISTS investigation_logs (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      case_id INTEGER NOT NULL,
+      user_id INTEGER NOT NULL,
+      action_taken TEXT NOT NULL,
+      evidence_ref TEXT,
+      next_action_date TEXT,
+      assigned_investigator TEXT,
+      created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+      FOREIGN KEY (case_id) REFERENCES cases(id),
+      FOREIGN KEY (user_id) REFERENCES users(id)
+    )`);
+
     // Create default admin user
     const defaultPassword = bcrypt.hashSync('admin123', 10);
     db.run(`INSERT OR IGNORE INTO users (service_number, password_hash, full_name, role, station) 
@@ -318,6 +332,37 @@ app.post('/api/cases/:id/updates', (req, res) => {
         return res.status(500).json({ error: 'Failed to add update' });
       }
       res.json({ success: true, updateId: this.lastID });
+    });
+});
+
+// ==================== INVESTIGATION LOGS ====================
+
+// Get investigation logs for a case
+app.get('/api/cases/:id/investigation-logs', (req, res) => {
+  db.all(`SELECT il.*, u.full_name as user_name
+          FROM investigation_logs il
+          LEFT JOIN users u ON il.user_id = u.id
+          WHERE il.case_id = ?
+          ORDER BY il.created_at DESC`,
+    [req.params.id],
+    (err, rows) => {
+      if (err) return res.status(500).json({ error: 'Database error' });
+      res.json(rows);
+    });
+});
+
+// Add investigation log entry
+app.post('/api/cases/:id/investigation-logs', (req, res) => {
+  const { user_id, action_taken, evidence_ref, next_action_date, assigned_investigator } = req.body;
+  if (!action_taken || !action_taken.trim()) {
+    return res.status(400).json({ error: 'action_taken is required' });
+  }
+  db.run(`INSERT INTO investigation_logs (case_id, user_id, action_taken, evidence_ref, next_action_date, assigned_investigator)
+          VALUES (?, ?, ?, ?, ?, ?)`,
+    [req.params.id, user_id, action_taken, evidence_ref || null, next_action_date || null, assigned_investigator || null],
+    function(err) {
+      if (err) return res.status(500).json({ error: 'Failed to save investigation log' });
+      res.json({ success: true, logId: this.lastID });
     });
 });
 
