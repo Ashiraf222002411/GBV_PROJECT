@@ -5,7 +5,7 @@ const bcrypt = require('bcryptjs');
 const path = require('path');
 
 const app = express();
-const PORT = 3001;
+const PORT = process.env.PORT || 3001;
 
 // Middleware
 app.use(cors());
@@ -16,10 +16,16 @@ app.use(express.static(__dirname));
 const db = new sqlite3.Database('./GBV_MIS.db', (err) => {
   if (err) {
     console.error('Error connecting to database:', err);
+    process.exit(1);
   } else {
     console.log('Connected to SQLite database');
     initializeDatabase();
   }
+});
+
+// Handle database errors
+db.on('error', (err) => {
+  console.error('Database error:', err);
 });
 
 // Initialize database schema
@@ -31,8 +37,7 @@ function initializeDatabase() {
       service_number TEXT UNIQUE NOT NULL,
       password_hash TEXT NOT NULL,
       full_name TEXT NOT NULL,
-      role TEXT NOT NULL CHECK(role IN ('Admin', 'Investigator', 'Commander', 'Data Entry')),
-      unit TEXT,
+      role TEXT NOT NULL CHECK(role IN ('admin', 'investigator', 'commander', 'data_entry')),
       station TEXT,
       email TEXT,
       phone TEXT,
@@ -118,7 +123,13 @@ function initializeDatabase() {
     // Create default admin user
     const defaultPassword = bcrypt.hashSync('admin123', 10);
     db.run(`INSERT OR IGNORE INTO users (service_number, password_hash, full_name, role, station) 
-            VALUES ('admin', ?, 'System Administrator', 'Admin', 'HQ')`, [defaultPassword]);
+            VALUES ('admin', ?, 'System Administrator', 'admin', 'HQ')`, [defaultPassword], (err) => {
+      if (err) {
+        console.error('Error creating default admin user:', err);
+      } else {
+        console.log('Default admin user ensured');
+      }
+    });
 
     console.log('Database initialized successfully');
   });
@@ -202,9 +213,10 @@ app.get('/api/cases', (req, res) => {
 
   db.all(query, params, (err, rows) => {
     if (err) {
-      return res.status(500).json({ error: 'Database error' });
+      console.error('Error fetching cases:', err);
+      return res.status(500).json({ error: 'Database error', details: err.message });
     }
-    res.json(rows);
+    res.json(rows || []);
   });
 });
 
@@ -292,12 +304,12 @@ app.put('/api/cases/:id', (req, res) => {
 
 // Get case updates
 app.get('/api/cases/:id/updates', (req, res) => {
-  db.all(`SELECT cu.*, u.full_name as user_name 
+  db.all(`SELECT cu.*, u.full_name as updated_by_name 
           FROM case_updates cu 
           LEFT JOIN users u ON cu.user_id = u.id 
           WHERE cu.case_id = ? 
           ORDER BY cu.created_at DESC`, 
-    [req.params.id], 
+    [req.params.id],
     (err, rows) => {
       if (err) {
         return res.status(500).json({ error: 'Database error' });
@@ -377,28 +389,38 @@ app.get('/api/stats/by-type', (req, res) => {
 
 // Get all users
 app.get('/api/users', (req, res) => {
-  db.all(`SELECT id, service_number, full_name, role, unit, station, email, phone, is_active, created_at 
+  db.all(`SELECT id, service_number, full_name, role, station, email, phone, is_active, created_at 
           FROM users ORDER BY full_name`, 
     (err, rows) => {
       if (err) {
-        return res.status(500).json({ error: 'Database error' });
+        console.error('Error fetching users:', err);
+        return res.status(500).json({ error: 'Database error', details: err.message });
       }
-      res.json(rows);
+      res.json(rows || []);
     });
 });
 
 // Create user
 app.post('/api/users', async (req, res) => {
-  const { service_number, password, full_name, role, unit, station, email, phone } = req.body;
+  const { service_number, password, full_name, role, station, email, phone } = req.body;
+  
+  // Validate required fields
+  if (!service_number || !password || !full_name || !role) {
+    return res.status(400).json({ error: 'Missing required fields: service_number, password, full_name, role' });
+  }
   
   const hashedPassword = await bcrypt.hash(password, 10);
   
-  db.run(`INSERT INTO users (service_number, password_hash, full_name, role, unit, station, email, phone) 
-          VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
-    [service_number, hashedPassword, full_name, role, unit, station, email, phone],
+  db.run(`INSERT INTO users (service_number, password_hash, full_name, role, station, email, phone) 
+          VALUES (?, ?, ?, ?, ?, ?, ?)`,
+    [service_number, hashedPassword, full_name, role, station, email, phone],
     function(err) {
       if (err) {
-        return res.status(500).json({ error: 'Failed to create user' });
+        console.error('Error creating user:', err);
+        if (err.code === 'SQLITE_CONSTRAINT') {
+          return res.status(400).json({ error: 'User with this service number already exists' });
+        }
+        return res.status(500).json({ error: 'Failed to create user', details: err.message });
       }
       res.json({ success: true, userId: this.lastID });
     });

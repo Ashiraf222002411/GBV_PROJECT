@@ -326,11 +326,11 @@
     <p class="login-sub">Authorized personnel only. All access is logged.</p>
     <div class="form-group">
       <label>Service Number / Username</label>
-      <input type="text" id="login-user" placeholder="e.g. RNP-2024-001" value="RNP-2024-001">
+      <input type="text" id="login-user" placeholder="e.g. admin or RNP-2024-001">
     </div>
     <div class="form-group">
       <label>Password</label>
-      <input type="password" id="login-pass" placeholder="Enter your password" value="password">
+      <input type="password" id="login-pass" placeholder="Enter your password">
     </div>
     <div class="form-group">
       <label>Role / Unit</label>
@@ -1111,7 +1111,7 @@
           </div>
           <div class="form-group form-full">
             <label class="required">Update Description</label>
-            <textarea name="description" rows="4" placeholder="Describe the update, actions taken, or findings..." required></textarea>
+            <textarea name="description" rows="4" placeholder="" required></textarea>
           </div>
         </div>
       </div>
@@ -1131,15 +1131,7 @@ let currentUser = null;
 // ── DATA ──────────────────────────────────────────────────────────
 let CASES = [];
 let USERS = [];
-const AUDIT = [
-  { ts:'2025-11-10 10:05', user:'RNP-2020-005 / Habimana', action:'LOGIN', detail:'Successful login', ip:'192.168.1.10' },
-  { ts:'2025-11-10 09:12', user:'RNP-2024-001 / Osei', action:'CASE_CREATE', detail:'Created GBV-2025-012', ip:'192.168.1.15' },
-  { ts:'2025-11-10 09:00', user:'RNP-2024-001 / Osei', action:'LOGIN', detail:'Successful login', ip:'192.168.1.15' },
-  { ts:'2025-11-09 16:30', user:'RNP-2022-112 / Uwase', action:'CASE_UPDATE', detail:'Updated status: GBV-2025-006 → Closed', ip:'192.168.2.44' },
-  { ts:'2025-11-09 14:00', user:'RNP-2023-045 / Muhire', action:'REPORT_VIEW', detail:'Viewed monthly report – November 2025', ip:'192.168.1.12' },
-  { ts:'2025-11-08 11:00', user:'RNP-2021-087 / Ndayambaje', action:'CASE_CREATE', detail:'Created GBV-2025-011', ip:'10.0.0.22' },
-  { ts:'2025-11-07 09:30', user:'RNP-2022-112 / Uwase', action:'SURVIVOR_VIEW', detail:'Accessed survivor record S-009', ip:'192.168.2.44' },
-];
+const AUDIT = [];
 
 // ── API HELPERS ──────────────────────────────────────────────────
 async function apiCall(endpoint, method = 'GET', data = null) {
@@ -1230,7 +1222,7 @@ async function doLogin() {
       document.querySelector('.user-role').textContent = currentUser.role;
       
       // Hide admin nav for non-admins
-      if (currentUser.role !== 'Admin') {
+      if (currentUser.role !== 'Admin' && currentUser.role !== 'admin') {
         const adminNav = document.getElementById('admin-nav');
         if (adminNav) adminNav.style.display = 'none';
       }
@@ -1408,14 +1400,14 @@ function renderUsers() {
   const tbody = document.getElementById('users-tbody');
   if (!tbody) return; // Skip if element doesn't exist
   
-  const roleClass = { Admin:'role-admin', Investigator:'role-investigator', Commander:'role-supervisor', 'Data Entry':'role-officer' };
+  const roleClass = { Admin:'role-admin', admin:'role-admin', Investigator:'role-investigator', investigator:'role-investigator', Commander:'role-supervisor', commander:'role-supervisor', 'Data Entry':'role-officer', data_entry:'role-officer' };
   tbody.innerHTML = USERS.map(u => `
     <tr>
       <td class="mono" style="color:var(--blue);">${u.service_number}</td>
       <td>${u.full_name}</td>
-      <td><span class="role-tag ${roleClass[u.role]}">${u.role}</span></td>
+      <td><span class="role-tag ${roleClass[u.role] || 'role-officer'}">${u.role}</span></td>
       <td>${u.station || 'N/A'}</td>
-      <td><span class="badge-pill ${u.status==='active'?'badge-active':'badge-urgent'}">${u.status.charAt(0).toUpperCase()+u.status.slice(1)}</span></td>
+      <td><span class="badge-pill ${u.is_active===1?'badge-active':'badge-urgent'}">${u.is_active===1?'Active':'Inactive'}</span></td>
       <td class="mono" style="font-size:11px;">${u.last_login ? new Date(u.last_login).toLocaleString() : 'Never'}</td>
       <td><button class="btn btn-sm btn-outline">Edit</button> <button class="btn btn-sm btn-danger">Suspend</button></td>
     </tr>`).join('');
@@ -1534,8 +1526,8 @@ async function showCaseDetail(id) {
     <div class="status-track">
       <div class="status-step done"><div class="status-dot">✓</div><div class="status-line"></div><div class="status-label">Reported</div></div>
       <div class="status-step done"><div class="status-dot">✓</div><div class="status-line"></div><div class="status-label">Registered</div></div>
-      <div class="status-step ${c.status!=='Open'?'done':''}"><div class="status-dot">${c.status!=='Open'?'✓':'3'}</div><div class="status-line"></div><div class="status-label">Investigation</div></div>
-      <div class="status-step ${c.status==='Referred'?'current':''}"><div class="status-dot">4</div><div class="status-line"></div><div class="status-label">Referred</div></div>
+      <div class="status-step ${c.status==='Under Investigation'||c.status==='Referred'||c.status==='Closed'?'done':'current'}"><div class="status-dot">${c.status==='Under Investigation'||c.status==='Referred'||c.status==='Closed'?'✓':'3'}</div><div class="status-line"></div><div class="status-label">Investigation</div></div>
+      <div class="status-step ${c.status==='Referred'?'current':c.status==='Closed'?'done':''}"><div class="status-dot">${c.status==='Closed'?'✓':'4'}</div><div class="status-line"></div><div class="status-label">Referred</div></div>
       <div class="status-step ${c.status==='Closed'?'done':''}"><div class="status-dot">${c.status==='Closed'?'✓':'5'}</div><div class="status-line"></div><div class="status-label">Closed</div></div>
     </div>
     ${updatesHtml}
@@ -1706,11 +1698,9 @@ async function addUser(e) {
   
   const userData = {
     service_number: formData.get('service_number'),
-    username: formData.get('username'),
     password: formData.get('password'),
     full_name: formData.get('full_name'),
     role: formData.get('role'),
-    unit: formData.get('unit') || null,
     station: formData.get('station'),
     email: formData.get('email') || null,
     phone: formData.get('phone') || null
