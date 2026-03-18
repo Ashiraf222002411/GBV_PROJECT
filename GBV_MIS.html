@@ -724,8 +724,8 @@ body { font-family: 'Sora', sans-serif; }
 
       <!-- ======================== SURVIVORS ======================== -->
       <div id="page-survivors" class="page">
-        <!-- Confidentiality Warning -->
-        <div class="bg-red-50 border border-red-200 rounded-2xl px-5 py-4 mb-4 flex items-start gap-3">
+        <!-- Confidentiality Warning (hidden for Admin) -->
+        <div id="survivor-conf-banner" class="bg-red-50 border border-red-200 rounded-2xl px-5 py-4 mb-4 flex items-start gap-3">
           <svg class="w-5 h-5 text-rnp-red flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/></svg>
           <div>
             <p class="text-rnp-red font-bold text-sm">Confidential Information</p>
@@ -1702,8 +1702,9 @@ async function showCaseDetail(id) {
         <div><span class="text-gray-400 text-xs uppercase tracking-wide">Assigned To</span><p class="font-medium mt-0.5">${c.assigned_to_name || 'Unassigned'}</p></div>
         <div class="col-span-2"><span class="text-gray-400 text-xs uppercase tracking-wide">Description</span><p class="mt-0.5 text-gray-600 leading-relaxed">${c.incident_description || '—'}</p></div>
         <div class="col-span-2 border-t border-gray-100 pt-3 mt-1">
-          <p class="text-xs font-semibold uppercase tracking-wide text-gray-400 mb-2">Survivor (Confidential)</p>
+          <p class="text-xs font-semibold uppercase tracking-wide text-gray-400 mb-2">Survivor${currentUser && currentUser.role !== 'Admin' ? ' (Confidential)' : ''}</p>
         </div>
+        ${currentUser && currentUser.role === 'Admin' ? `<div class="col-span-2"><span class="text-gray-400 text-xs">Full Name</span><p class="font-medium mt-0.5">${c.victim_name || '—'}</p></div>` : ''}
         <div><span class="text-gray-400 text-xs">Gender</span><p class="font-medium mt-0.5">${c.victim_gender || '—'}</p></div>
         <div><span class="text-gray-400 text-xs">Age</span><p class="font-medium mt-0.5">${c.victim_age || '—'}</p></div>
         <div class="col-span-2 border-t border-gray-100 pt-3 mt-1">
@@ -1966,12 +1967,14 @@ async function addInvLog() {
 async function loadSurvivors() {
   const tbody = document.getElementById('survivors-tbody');
   tbody.innerHTML = '<tr><td colspan="7" class="text-center py-4 text-gray-400">Loading...</td></tr>';
+  const banner = document.getElementById('survivor-conf-banner');
+  if (banner) banner.style.display = currentUser && currentUser.role === 'Admin' ? 'none' : '';
   try {
     const rows = await apiCall('/survivors');
     tbody.innerHTML = rows.length ? rows.map(r => `
       <tr class="hover:bg-gray-50 border-b border-gray-100 last:border-0">
         <td class="px-4 py-3 font-mono text-xs text-rnp-light">SUR-${String(r.id).padStart(4,'0')}</td>
-        <td class="px-4 py-3 text-sm text-gray-400 italic">[Confidential]</td>
+        <td class="px-4 py-3 text-sm ${currentUser && currentUser.role === 'Admin' ? 'font-medium' : 'text-gray-400 italic'}">${currentUser && currentUser.role === 'Admin' ? (r.victim_name || '—') : '[Confidential]'}</td>
         <td class="px-4 py-3 text-sm">${r.victim_gender || '—'}</td>
         <td class="px-4 py-3 text-sm">${r.victim_age || '—'}</td>
         <td class="px-4 py-3 text-sm text-gray-500">${r.district || '—'}</td>
@@ -2145,7 +2148,7 @@ async function updateUser(e) {
   };
   
   try {
-    await apiCall(`/users/${userId}`, { method: 'PUT', body: JSON.stringify(userData) });
+    await apiCall(`/users/${userId}`, 'PUT', userData);
     closeModal('edit-user-modal');
     await loadUsers();
     renderUsers();
