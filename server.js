@@ -257,6 +257,243 @@ function initializeDatabase() {
 
 initializeDatabase();
 
+// ── Seed Data ──────────────────────────────────────────────────────
+function seedDatabase() {
+  db.get('SELECT COUNT(*) as cnt FROM cases', (err, row) => {
+    if (err || (row && row.cnt > 0)) return; // skip if data already exists
+
+    console.log('Seeding database with sample data...');
+
+    const rwLocations = [
+      { province: 'Kigali City',       district: 'Gasabo',     sector: 'Kimironko',    station: 'Kimironko PS' },
+      { province: 'Kigali City',       district: 'Gasabo',     sector: 'Remera',       station: 'Remera PS' },
+      { province: 'Kigali City',       district: 'Gasabo',     sector: 'Kacyiru',      station: 'Kacyiru PS' },
+      { province: 'Kigali City',       district: 'Gasabo',     sector: 'Gisozi',       station: 'Gisozi PS' },
+      { province: 'Kigali City',       district: 'Kicukiro',   sector: 'Niboye',       station: 'Kicukiro PS' },
+      { province: 'Kigali City',       district: 'Kicukiro',   sector: 'Kagarama',     station: 'Kagarama PS' },
+      { province: 'Kigali City',       district: 'Kicukiro',   sector: 'Gatenga',      station: 'Gatenga PS' },
+      { province: 'Kigali City',       district: 'Nyarugenge', sector: 'Muhima',       station: 'Muhima PS' },
+      { province: 'Kigali City',       district: 'Nyarugenge', sector: 'Nyamirambo',   station: 'Nyamirambo PS' },
+      { province: 'Kigali City',       district: 'Nyarugenge', sector: 'Rwezamenyo',   station: 'Rwezamenyo PS' },
+      { province: 'Northern Province', district: 'Musanze',    sector: 'Muhoza',       station: 'Musanze PS' },
+      { province: 'Northern Province', district: 'Musanze',    sector: 'Cyuve',        station: 'Musanze PS' },
+      { province: 'Northern Province', district: 'Gicumbi',    sector: 'Byumba',       station: 'Gicumbi PS' },
+      { province: 'Northern Province', district: 'Gicumbi',    sector: 'Kaniga',       station: 'Gicumbi PS' },
+      { province: 'Northern Province', district: 'Burera',     sector: 'Cyanika',      station: 'Burera PS' },
+      { province: 'Northern Province', district: 'Gakenke',    sector: 'Gakenke',      station: 'Gakenke PS' },
+      { province: 'Northern Province', district: 'Rulindo',    sector: 'Base',         station: 'Rulindo PS' },
+      { province: 'Southern Province', district: 'Huye',       sector: 'Ngoma',        station: 'Huye PS' },
+      { province: 'Southern Province', district: 'Huye',       sector: 'Tumba',        station: 'Huye PS' },
+      { province: 'Southern Province', district: 'Muhanga',    sector: 'Muhanga',      station: 'Muhanga PS' },
+      { province: 'Southern Province', district: 'Nyanza',     sector: 'Nyanza',       station: 'Nyanza PS' },
+      { province: 'Southern Province', district: 'Ruhango',    sector: 'Ruhango',      station: 'Ruhango PS' },
+      { province: 'Southern Province', district: 'Kamonyi',    sector: 'Kamonyi',      station: 'Kamonyi PS' },
+      { province: 'Southern Province', district: 'Nyamagabe',  sector: 'Kitabi',       station: 'Nyamagabe PS' },
+      { province: 'Southern Province', district: 'Gisagara',   sector: 'Gisagara',     station: 'Gisagara PS' },
+      { province: 'Eastern Province',  district: 'Rwamagana',  sector: 'Rwamagana',    station: 'Rwamagana PS' },
+      { province: 'Eastern Province',  district: 'Kayonza',    sector: 'Mukarange',    station: 'Kayonza PS' },
+      { province: 'Eastern Province',  district: 'Bugesera',   sector: 'Nyamata',      station: 'Bugesera PS' },
+      { province: 'Eastern Province',  district: 'Nyagatare',  sector: 'Nyagatare',    station: 'Nyagatare PS' },
+      { province: 'Eastern Province',  district: 'Gatsibo',    sector: 'Kiziguro',     station: 'Gatsibo PS' },
+      { province: 'Eastern Province',  district: 'Kirehe',     sector: 'Kirehe',       station: 'Kirehe PS' },
+      { province: 'Eastern Province',  district: 'Ngoma',      sector: 'Kibungo',      station: 'Ngoma PS' },
+      { province: 'Western Province',  district: 'Rubavu',     sector: 'Gisenyi',      station: 'Rubavu PS' },
+      { province: 'Western Province',  district: 'Rubavu',     sector: 'Rugerero',     station: 'Rubavu PS' },
+      { province: 'Western Province',  district: 'Rusizi',     sector: 'Kamembe',      station: 'Rusizi PS' },
+      { province: 'Western Province',  district: 'Karongi',    sector: 'Kibuye',       station: 'Karongi PS' },
+      { province: 'Western Province',  district: 'Nyabihu',    sector: 'Kintobo',      station: 'Nyabihu PS' },
+      { province: 'Western Province',  district: 'Ngororero',  sector: 'Ngororero',    station: 'Ngororero PS' },
+      { province: 'Western Province',  district: 'Nyamasheke', sector: 'Shangi',       station: 'Nyamasheke PS' },
+      { province: 'Western Province',  district: 'Rutsiro',    sector: 'Murunda',      station: 'Rutsiro PS' },
+    ];
+
+    const femaleNames = [
+      'Mukamana Chantal','Uwimana Marie','Umubyeyi Esperance','Mukankusi Beatrice',
+      'Uwineza Solange','Nyirahabimana Olive','Mukagakwandi Josephine','Uwase Vestine',
+      'Mukamazimpaka Claudine','Akimana Diane','Nyiraneza Alphonsine','Mukashyaka Valerie',
+      'Uwingabiye Angele','Mukamusoni Immaculee','Nyirabageni Annette','Mukamuganga Cecile',
+      'Uwera Ange','Murekatete Florentine','Mukaremera Therese','Nyiramahoro Gaudence',
+      'Mukantaganzwa Providance','Uwantege Julienne','Mukandekezi Rose','Nyirakamana Scholastique',
+      'Mukagatare Antoinette','Uwimana Felicite','Nyirabagenzi Constance','Mukarukundo Leontine',
+      'Umurungi Pascasie','Mukashema Domitille','Nyirarukundo Suzanne','Mukabatware Justine',
+      'Uwamariya Bernadette','Mukazitoni Prisca','Nyirabeza Agnes','Mukantwali Mathilde',
+      'Uwizeye Solange','Mukarutesi Theophile','Nyirankundiye Goretti','Mukamuhoza Francoise',
+      'Uwamahoro Generose','Mukasakindi Perpetue','Nyiramugisha Faustine','Mukarwego Donata',
+      'Uwineza Clarisse','Mukamukasa Julienne','Nyirabagabo Valentina','Mukankineza Annunciata',
+      'Uwingabire Georgette','Mukaneza Denise','Nyirabagenzi Therese','Mukamusoni Odette',
+      'Uwimana Consolee','Mukagatare Monique','Nyiraneza Clementine','Mukamana Jacqueline',
+      'Uwacu Liberata','Mukarwamo Emeritha','Nyirabageni Marceline','Mukamuhirwa Modeste',
+    ];
+
+    const maleNames = [
+      'Habimana Jean','Nkurunziza Pierre','Bizimana Emmanuel','Ndayishimiye Alexis',
+      'Niyonzima Sylvestre','Nzeyimana Celestin','Hakizimana Callixte','Nizeyimana Innocent',
+      'Habyarimana Felix','Nshimiyimana Alexis','Rurangwa Eric','Kaberuka Patrick',
+      'Ndizeye Claude','Muhayimana Theogene','Ntakirutimana Edouard','Kayitare Frederic',
+      'Bizumuremyi Augustin','Bazimaziki Vincent','Tuyishime Pacifique','Nzamwita Damien',
+      'Mugabo Samuel','Hakizayo Faustin','Ntibituruki Juvénal','Sekamonyo Gaspard',
+      'Musabyimana Jean-Marie','Kamanzi Fidele','Nshimiyumukiza Aloys','Uwimana Bosco',
+      'Ndikumana Desire','Kayiranga Modeste','Muvunyi Augustin','Twagirayezu Leon',
+      'Bizimungu Donat','Gatera Olivier','Rukundo Mathieu','Kagabo Theodore',
+      'Niyomugabo Felicien','Hagenimana Jerome','Nzabanita Protais','Sezikeye Samuel',
+    ];
+
+    const incidentTypes = [
+      'Domestic Violence','Domestic Violence','Domestic Violence',
+      'Sexual Violence','Sexual Violence',
+      'Child Abuse',
+      'Stalking/Harassment',
+      'Forced Marriage',
+      'Economic Abuse',
+    ];
+
+    const statuses   = ['Open','Open','Under Investigation','Under Investigation','Closed','Referred'];
+    const priorities = ['Low','Normal','Normal','High','Urgent'];
+
+    const descriptions = {
+      'Domestic Violence': [
+        'Survivor reported repeated physical assault by spouse over several months. Injuries include bruises on arms and face.',
+        'Victim was beaten by partner after a domestic dispute. Neighbours called police after hearing screams.',
+        'Survivor presented with injuries consistent with blunt force trauma. Reported ongoing violence in the home.',
+        'Victim fled the marital home after sustained abuse. Temporary shelter arranged through ISANGE ONE STOP Centre.',
+      ],
+      'Sexual Violence': [
+        'Survivor reported sexual assault by an acquaintance. Medical examination conducted at district hospital.',
+        'Victim reported rape incident. Forensic evidence collected. Survivor referred for psychosocial support.',
+        'Minor survivor reported sexual abuse. Case referred to Child Protection Unit and prosecution.',
+        'Survivor disclosed assault during routine community outreach. Case opened retrospectively.',
+      ],
+      'Child Abuse': [
+        'Child presented with unexplained injuries. Teacher reported suspected abuse to local authorities.',
+        'Child disclosed physical and emotional abuse by guardian. Removed from home pending investigation.',
+        'School counsellor reported concerning behaviour. Investigation revealed sustained neglect.',
+        'Child victim referred by MIGEPROF partner organisation. CPS engaged.',
+      ],
+      'Stalking/Harassment': [
+        'Victim reported persistent unwanted contact and threats from former partner.',
+        'Survivor received threatening messages and was followed to workplace. Protective order sought.',
+        'Victim reported being surveilled at home and work over three-week period.',
+      ],
+      'Forced Marriage': [
+        'Minor girl reported being coerced into marriage by family. Rescue and shelter coordinated.',
+        'Survivor escaped forced marriage arrangement and sought police protection.',
+        'Community leader reported suspected forced marriage of a minor in rural area.',
+      ],
+      'Economic Abuse': [
+        'Survivor reported systematic deprivation of finances and employment sabotage by partner.',
+        'Victim denied access to household income and property documents. Legal aid referred.',
+        'Survivor reported eviction from marital property by spouse without legal process.',
+      ],
+    };
+
+    const relationships = ['Spouse','Former Partner','Parent','Relative','Neighbour','Employer','Acquaintance','Unknown'];
+
+    function randItem(arr) { return arr[Math.floor(Math.random() * arr.length)]; }
+    function randInt(min, max) { return Math.floor(Math.random() * (max - min + 1)) + min; }
+    function pastDate(maxDaysAgo) {
+      const d = new Date();
+      d.setDate(d.getDate() - randInt(0, maxDaysAgo));
+      return d.toISOString().slice(0, 10);
+    }
+
+    // Insert seed users first, then cases
+    const seedUsers = [
+      { sn: 'RNP-0001', name: 'Insp. Kagabo Theodore',   role: 'Investigator',  station: 'Remera PS' },
+      { sn: 'RNP-0002', name: 'Insp. Uwimana Solange',   role: 'Investigator',  station: 'Kicukiro PS' },
+      { sn: 'RNP-0003', name: 'Insp. Niyonzima Eric',    role: 'Investigator',  station: 'Musanze PS' },
+      { sn: 'RNP-0004', name: 'Insp. Mukamana Rose',     role: 'Investigator',  station: 'Huye PS' },
+      { sn: 'RNP-0005', name: 'Insp. Habimana Claude',   role: 'Investigator',  station: 'Rubavu PS' },
+      { sn: 'RNP-0006', name: 'Insp. Uwineza Diane',     role: 'Investigator',  station: 'Rwamagana PS' },
+      { sn: 'RNP-0010', name: 'Supt. Rurangwa Jean',     role: 'Commander',     station: 'Kigali City HQ' },
+      { sn: 'RNP-0011', name: 'Supt. Nyiraneza Alice',   role: 'Commander',     station: 'Northern Province HQ' },
+      { sn: 'RNP-0012', name: 'Supt. Bizimana Paul',     role: 'Commander',     station: 'Southern Province HQ' },
+      { sn: 'RNP-0020', name: 'Cst. Uwase Claudine',     role: 'Data Entry',    station: 'Kimironko PS' },
+      { sn: 'RNP-0021', name: 'Cst. Ndizeye Patrick',    role: 'Data Entry',    station: 'Musanze PS' },
+    ];
+
+    const defaultPwd = bcrypt.hashSync('Rnp@2024', 10);
+    let userIds = {};
+
+    db.serialize(() => {
+      // Insert seed users
+      const userStmt = db.prepare(
+        `INSERT OR IGNORE INTO users (service_number, password_hash, full_name, role, station)
+         VALUES (?, ?, ?, ?, ?)`
+      );
+      for (const u of seedUsers) {
+        userStmt.run([u.sn, defaultPwd, u.name, u.role, u.station]);
+      }
+      userStmt.finalize();
+
+      // Fetch admin + seed investigator IDs for assigning cases
+      db.all(`SELECT id, service_number, role FROM users`, (err2, users) => {
+        if (err2) { console.error('Seed: could not fetch users'); return; }
+
+        const investigators = users.filter(u => u.role === 'Investigator').map(u => u.id);
+        const admins        = users.filter(u => u.role === 'Admin').map(u => u.id);
+        const allStaff      = [...investigators, ...admins];
+
+        // Build 120 cases
+        const caseStmt = db.prepare(`INSERT OR IGNORE INTO cases
+          (case_number, victim_name, victim_age, victim_gender, victim_phone, victim_address,
+           incident_type, incident_date, incident_time, incident_location, incident_description,
+           suspect_name, suspect_age, suspect_gender, relationship_to_victim,
+           status, priority, assigned_to, reported_by, station, province, district, sector)
+          VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)`);
+
+        const year = new Date().getFullYear();
+        for (let i = 1; i <= 120; i++) {
+          const loc        = randItem(rwLocations);
+          const type       = randItem(incidentTypes);
+          const descArr    = descriptions[type];
+          const victimName = randItem(femaleNames);
+          const suspectName= Math.random() > 0.15 ? randItem(maleNames) : 'Unknown';
+          const caseNum    = `GBV-${year}-${String(i).padStart(6, '0')}`;
+          const date       = pastDate(540); // up to ~18 months ago
+          const time       = `${String(randInt(6,22)).padStart(2,'0')}:${randInt(0,1)*30 === 0 ? '00':'30'}`;
+          const status     = randItem(statuses);
+          const priority   = randItem(priorities);
+          const assignedTo = allStaff.length ? randItem(allStaff) : null;
+          const reportedBy = allStaff.length ? randItem(allStaff) : null;
+
+          caseStmt.run([
+            caseNum,
+            victimName,
+            randInt(15, 55),
+            'Female',
+            `+2507${randInt(80000000,99999999)}`,
+            `${loc.sector}, ${loc.district}`,
+            type,
+            date,
+            time,
+            `${loc.sector}, ${loc.district}`,
+            randItem(descArr),
+            suspectName,
+            suspectName !== 'Unknown' ? randInt(20, 60) : null,
+            suspectName !== 'Unknown' ? 'Male' : null,
+            randItem(relationships),
+            status,
+            priority,
+            assignedTo,
+            reportedBy,
+            loc.station,
+            loc.province,
+            loc.district,
+            loc.sector,
+          ]);
+        }
+
+        caseStmt.finalize(() => {
+          console.log('Seed complete: 120 sample cases and 11 users inserted ✓');
+        });
+      });
+    });
+  });
+}
+
+// Run seed after a short delay to allow schema init to complete
+setTimeout(seedDatabase, 1500);
+
 // ── Schema migration: upgrade lowercase roles to Title Case ────────
 db.get("SELECT sql FROM sqlite_master WHERE type='table' AND name='users'", (err, row) => {
   if (!row || !row.sql || !row.sql.includes("'admin'")) return; // already migrated

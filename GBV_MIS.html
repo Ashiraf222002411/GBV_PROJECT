@@ -1522,6 +1522,7 @@ function nav(page) {
   if (page === 'investigation') { populateInvSelect(); }
   if (page === 'survivors')     { loadSurvivors(); }
   if (page === 'suspects')      { loadSuspects(); }
+  if (page === 'reports')       { generateReport(); }
   if (page === 'audit')         { loadAudit(); }
   if (page === 'register')      { populateAssignSelect(); autoFillOfficer(); }
   closeSidebar();
@@ -2014,11 +2015,13 @@ async function generateReport() {
   const to   = document.getElementById('rep-to').value;
   const prov = document.getElementById('rep-province').value;
   const type = document.getElementById('rep-type').value;
-  let url = '/reports/summary?';
-  if (from) url += `from=${from}&`;
-  if (to)   url += `to=${to}&`;
-  if (prov) url += `province=${encodeURIComponent(prov)}&`;
-  if (type) url += `type=${encodeURIComponent(type)}&`;
+  const params = new URLSearchParams();
+  if (from) params.set('from', from);
+  if (to)   params.set('to', to);
+  if (prov) params.set('province', prov);
+  if (type) params.set('type', type);
+  const qs = params.toString();
+  const url = `/reports/summary${qs ? '?' + qs : ''}`;
   try {
     const { summary, byType } = await apiCall(url);
     document.getElementById('rep-total').textContent    = summary.total       || 0;
