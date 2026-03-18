@@ -734,7 +734,7 @@ app.get('/api/reports/summary', requireAuth, (req, res) => {
 // ══════════════════════════════════════════════════════════════════
 
 app.get('/api/survivors', requireAuth, (req, res) => {
-  db.all(`SELECT c.id, c.case_number, c.victim_gender, c.victim_age,
+  db.all(`SELECT c.id, c.case_number, c.victim_name, c.victim_gender, c.victim_age,
             c.district, c.province, c.status, c.priority, c.created_at,
             u.full_name as assigned_to_name
           FROM cases c LEFT JOIN users u ON c.assigned_to = u.id
