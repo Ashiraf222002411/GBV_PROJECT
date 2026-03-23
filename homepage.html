@@ -1,0 +1,930 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>GBV MIS — Rwanda National Police | Isange One Stop Centre</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Sora:wght@300;400;500;600;700;800&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<script>
+tailwind.config = {
+  theme: { extend: {
+    colors: {
+      'rnp-navy':  '#0a1628',
+      'rnp-blue':  '#1a3a6b',
+      'rnp-mid':   '#2655a0',
+      'rnp-light': '#3b7dd8',
+      'rnp-gold':  '#c49a2a',
+      'rnp-red':   '#b83232',
+      'rnp-green': '#1e7a4a',
+    },
+    fontFamily: { sans: ['Sora','sans-serif'], mono: ['DM Mono','monospace'] },
+    animation: {
+      'fade-up':   'fadeUp 0.7s ease forwards',
+      'fade-in':   'fadeIn 0.6s ease forwards',
+      'slide-in':  'slideIn 0.8s ease forwards',
+      'count-up':  'fadeUp 1s ease forwards',
+    },
+    keyframes: {
+      fadeUp:  { '0%': { opacity:'0', transform:'translateY(30px)' }, '100%': { opacity:'1', transform:'translateY(0)' } },
+      fadeIn:  { '0%': { opacity:'0' }, '100%': { opacity:'1' } },
+      slideIn: { '0%': { opacity:'0', transform:'translateX(-30px)' }, '100%': { opacity:'1', transform:'translateX(0)' } },
+    }
+  }}
+}
+</script>
+<style>
+* { box-sizing: border-box; }
+body { font-family: 'Sora', sans-serif; }
+::-webkit-scrollbar { width: 5px; }
+::-webkit-scrollbar-track { background: #f1f5f9; }
+::-webkit-scrollbar-thumb { background: #3b7dd8; border-radius: 10px; }
+
+/* Nav blur */
+.nav-glass {
+  background: rgba(10, 22, 40, 0.92);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+}
+
+/* Hero gradient overlay */
+.hero-overlay {
+  background: linear-gradient(
+    135deg,
+    rgba(10,22,40,0.90) 0%,
+    rgba(26,58,107,0.80) 50%,
+    rgba(10,22,40,0.70) 100%
+  );
+}
+
+/* Animated counter */
+.stat-number { font-variant-numeric: tabular-nums; }
+
+/* Section divider */
+.divider {
+  width: 60px; height: 4px;
+  background: linear-gradient(90deg, #c49a2a, #3b7dd8);
+  border-radius: 2px;
+}
+
+/* Card hover */
+.feature-card {
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+.feature-card:hover {
+  transform: translateY(-6px);
+  box-shadow: 0 20px 40px rgba(10,22,40,0.15);
+}
+
+/* Image parallax */
+.parallax-img {
+  transition: transform 0.4s ease;
+}
+.parallax-img:hover { transform: scale(1.03); }
+
+/* Pulse ring */
+@keyframes pulseRing {
+  0%   { transform: scale(1);   opacity: 0.8; }
+  100% { transform: scale(1.6); opacity: 0; }
+}
+.pulse-ring::before {
+  content: '';
+  position: absolute;
+  inset: -8px;
+  border-radius: 50%;
+  border: 2px solid #c49a2a;
+  animation: pulseRing 1.8s ease-out infinite;
+}
+
+/* Scroll reveal */
+.reveal { opacity: 0; transform: translateY(28px); transition: opacity 0.7s ease, transform 0.7s ease; }
+.reveal.visible { opacity: 1; transform: translateY(0); }
+
+/* Mobile menu */
+#mobile-menu { transition: max-height 0.3s ease, opacity 0.3s ease; max-height: 0; opacity: 0; overflow: hidden; }
+#mobile-menu.open { max-height: 400px; opacity: 1; }
+
+/* Hero text animation */
+@keyframes heroSlideUp {
+  from { opacity: 0; transform: translateY(40px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+.hero-title  { animation: heroSlideUp 0.9s ease 0.2s both; }
+.hero-sub    { animation: heroSlideUp 0.9s ease 0.4s both; }
+.hero-btns   { animation: heroSlideUp 0.9s ease 0.6s both; }
+.hero-badge  { animation: heroSlideUp 0.9s ease 0.8s both; }
+
+/* Quote bar */
+.quote-bar {
+  background: linear-gradient(135deg, #0a1628 0%, #1a3a6b 100%);
+}
+</style>
+</head>
+
+<body class="bg-white text-gray-800">
+
+<!-- ══════════════════════════════════════════════
+     NAVBAR
+══════════════════════════════════════════════ -->
+<nav id="navbar" class="fixed top-0 left-0 right-0 z-50 transition-all duration-300">
+  <div class="nav-glass">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <div class="flex items-center justify-between h-16 lg:h-18">
+
+        <!-- Logo -->
+        <div class="flex items-center gap-3">
+          <img src="/RNP.png" alt="RNP Logo" class="h-10 w-10 object-contain">
+          <div>
+            <p class="text-white font-bold text-sm leading-tight tracking-wide">Rwanda National Police</p>
+            <p class="text-rnp-gold text-xs font-medium tracking-widest uppercase">GBV Management System</p>
+          </div>
+        </div>
+
+        <!-- Desktop nav -->
+        <div class="hidden md:flex items-center gap-8">
+          <a href="#about"     class="text-gray-300 hover:text-rnp-gold text-sm font-medium transition-colors">About</a>
+          <a href="#features"  class="text-gray-300 hover:text-rnp-gold text-sm font-medium transition-colors">Features</a>
+          <a href="#isange"    class="text-gray-300 hover:text-rnp-gold text-sm font-medium transition-colors">Isange OSC</a>
+          <a href="#awareness" class="text-gray-300 hover:text-rnp-gold text-sm font-medium transition-colors">Awareness</a>
+          <a href="#contact"   class="text-gray-300 hover:text-rnp-gold text-sm font-medium transition-colors">Contact</a>
+        </div>
+
+        <!-- CTA -->
+        <div class="hidden md:flex items-center gap-3">
+          <a href="/app" class="px-5 py-2 bg-rnp-gold text-rnp-navy font-semibold text-sm rounded-lg hover:bg-yellow-400 transition-colors">
+            Login to System
+          </a>
+        </div>
+
+        <!-- Hamburger -->
+        <button id="hamburger" class="md:hidden text-white p-2" onclick="toggleMenu()">
+          <svg id="ham-icon" class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"/>
+          </svg>
+        </button>
+      </div>
+    </div>
+
+    <!-- Mobile menu -->
+    <div id="mobile-menu" class="md:hidden border-t border-white/10 px-4 pb-4">
+      <div class="flex flex-col gap-3 pt-4">
+        <a href="#about"     onclick="toggleMenu()" class="text-gray-300 hover:text-rnp-gold py-2 text-sm font-medium border-b border-white/10">About</a>
+        <a href="#features"  onclick="toggleMenu()" class="text-gray-300 hover:text-rnp-gold py-2 text-sm font-medium border-b border-white/10">Features</a>
+        <a href="#isange"    onclick="toggleMenu()" class="text-gray-300 hover:text-rnp-gold py-2 text-sm font-medium border-b border-white/10">Isange OSC</a>
+        <a href="#awareness" onclick="toggleMenu()" class="text-gray-300 hover:text-rnp-gold py-2 text-sm font-medium border-b border-white/10">Awareness</a>
+        <a href="#contact"   onclick="toggleMenu()" class="text-gray-300 hover:text-rnp-gold py-2 text-sm font-medium">Contact</a>
+        <a href="/app" class="mt-2 px-5 py-2.5 bg-rnp-gold text-rnp-navy font-semibold text-sm rounded-lg text-center">
+          Login to System
+        </a>
+      </div>
+    </div>
+  </div>
+</nav>
+
+
+<!-- ══════════════════════════════════════════════
+     HERO
+══════════════════════════════════════════════ -->
+<section class="relative min-h-screen flex items-center overflow-hidden">
+
+  <!-- Background image -->
+  <div class="absolute inset-0">
+    <img src="/images/homepage GBV image .jpg"
+         alt="GBV Awareness"
+         class="w-full h-full object-cover object-center">
+    <div class="hero-overlay absolute inset-0"></div>
+  </div>
+
+  <!-- Decorative grid -->
+  <div class="absolute inset-0 opacity-5"
+       style="background-image: linear-gradient(rgba(196,154,42,0.5) 1px, transparent 1px), linear-gradient(90deg, rgba(196,154,42,0.5) 1px, transparent 1px); background-size: 60px 60px;">
+  </div>
+
+  <!-- Content -->
+  <div class="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-32 lg:py-40">
+    <div class="max-w-3xl">
+
+      <!-- Badge -->
+      <div class="hero-badge inline-flex items-center gap-2 bg-rnp-gold/20 border border-rnp-gold/40 rounded-full px-4 py-1.5 mb-6">
+        <span class="w-2 h-2 bg-rnp-gold rounded-full animate-pulse"></span>
+        <span class="text-rnp-gold text-xs font-semibold tracking-widest uppercase">Rwanda National Police · Isange One Stop Centre</span>
+      </div>
+
+      <!-- Headline -->
+      <h1 class="hero-title text-4xl sm:text-5xl lg:text-6xl font-extrabold text-white leading-tight mb-6">
+        Protecting Every Survivor.<br>
+        <span class="text-rnp-gold">Ending Gender-Based</span><br>
+        Violence in Rwanda.
+      </h1>
+
+      <!-- Sub -->
+      <p class="hero-sub text-lg text-gray-200 leading-relaxed mb-8 max-w-xl">
+        A secure, integrated Management Information System built for the Rwanda National Police to track, manage, and respond to GBV cases across all provinces — faster, smarter, and with dignity.
+      </p>
+
+      <!-- Buttons -->
+      <div class="hero-btns flex flex-wrap gap-4">
+        <a href="/app"
+           class="inline-flex items-center gap-2 px-7 py-3.5 bg-rnp-gold text-rnp-navy font-bold rounded-xl text-sm hover:bg-yellow-400 transition-all shadow-lg shadow-rnp-gold/30 hover:shadow-rnp-gold/50 hover:-translate-y-0.5">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/>
+          </svg>
+          Access the System
+        </a>
+        <a href="#about"
+           class="inline-flex items-center gap-2 px-7 py-3.5 border-2 border-white/40 text-white font-semibold rounded-xl text-sm hover:bg-white/10 transition-all">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+          </svg>
+          Learn More
+        </a>
+      </div>
+
+      <!-- Emergency line -->
+      <div class="hero-badge mt-10 inline-flex items-center gap-3 bg-rnp-red/20 border border-rnp-red/40 rounded-xl px-5 py-3">
+        <svg class="w-5 h-5 text-red-400 flex-shrink-0" fill="currentColor" viewBox="0 0 24 24">
+          <path d="M6.62 10.79c1.44 2.83 3.76 5.14 6.59 6.59l2.2-2.2c.27-.27.67-.36 1.02-.24 1.12.37 2.33.57 3.57.57.55 0 1 .45 1 1V20c0 .55-.45 1-1 1-9.39 0-17-7.61-17-17 0-.55.45-1 1-1h3.5c.55 0 1 .45 1 1 0 1.25.2 2.45.57 3.57.11.35.03.74-.25 1.02l-2.2 2.2z"/>
+        </svg>
+        <div>
+          <p class="text-red-300 text-xs font-semibold uppercase tracking-wide">GBV Emergency Hotline</p>
+          <p class="text-white font-bold text-lg leading-tight">3029 <span class="text-gray-400 text-sm font-normal">(Toll-Free · 24/7)</span></p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Scroll indicator -->
+  <div class="absolute bottom-8 left-1/2 -translate-x-1/2 text-white/50 animate-bounce">
+    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
+    </svg>
+  </div>
+</section>
+
+
+<!-- ══════════════════════════════════════════════
+     STATS BAR
+══════════════════════════════════════════════ -->
+<section class="bg-rnp-navy py-12">
+  <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+    <div class="grid grid-cols-2 md:grid-cols-4 gap-8 text-center">
+
+      <div class="reveal">
+        <p class="stat-number text-3xl lg:text-4xl font-extrabold text-rnp-gold" data-target="30">0</p>
+        <p class="text-gray-300 text-sm mt-1 font-medium">Districts Covered</p>
+      </div>
+      <div class="reveal" style="transition-delay:0.1s">
+        <p class="stat-number text-3xl lg:text-4xl font-extrabold text-rnp-gold" data-target="5">0</p>
+        <p class="text-gray-300 text-sm mt-1 font-medium">Isange Centres</p>
+      </div>
+      <div class="reveal" style="transition-delay:0.2s">
+        <p class="stat-number text-3xl lg:text-4xl font-extrabold text-rnp-gold" data-target="24">0</p>
+        <p class="text-gray-300 text-sm mt-1 font-medium">Hour Response</p>
+      </div>
+      <div class="reveal" style="transition-delay:0.3s">
+        <p class="stat-number text-3xl lg:text-4xl font-extrabold text-rnp-gold" data-target="100">0</p>
+        <p class="text-gray-300 text-sm mt-1 font-medium">% Confidential</p>
+      </div>
+
+    </div>
+  </div>
+</section>
+
+
+<!-- ══════════════════════════════════════════════
+     ABOUT / MISSION
+══════════════════════════════════════════════ -->
+<section id="about" class="py-20 lg:py-28 bg-white">
+  <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+    <div class="grid lg:grid-cols-2 gap-14 items-center">
+
+      <!-- Image -->
+      <div class="reveal order-2 lg:order-1 relative">
+        <div class="relative rounded-2xl overflow-hidden shadow-2xl">
+          <img src="/images/isange_building.jpeg"
+               alt="Isange One Stop Centre Building"
+               class="w-full h-80 lg:h-[480px] object-cover parallax-img">
+          <div class="absolute inset-0 bg-gradient-to-t from-rnp-navy/60 to-transparent"></div>
+          <div class="absolute bottom-5 left-5 right-5">
+            <span class="inline-block bg-rnp-gold text-rnp-navy text-xs font-bold px-3 py-1 rounded-full uppercase tracking-wide">
+              Isange One Stop Centre
+            </span>
+            <p class="text-white font-semibold text-sm mt-1">Providing integrated services under one roof</p>
+          </div>
+        </div>
+        <!-- Decorative element -->
+        <div class="absolute -bottom-5 -right-5 w-32 h-32 bg-rnp-gold/10 rounded-2xl -z-10"></div>
+        <div class="absolute -top-5 -left-5 w-20 h-20 bg-rnp-blue/10 rounded-2xl -z-10"></div>
+      </div>
+
+      <!-- Text -->
+      <div class="reveal order-1 lg:order-2" style="transition-delay:0.2s">
+        <div class="divider mb-5"></div>
+        <p class="text-rnp-mid font-semibold text-sm uppercase tracking-widest mb-3">Our Mission</p>
+        <h2 class="text-3xl lg:text-4xl font-extrabold text-rnp-navy leading-tight mb-6">
+          Rwanda's Unified Response to Gender-Based Violence
+        </h2>
+        <p class="text-gray-600 leading-relaxed mb-5">
+          The <strong>Isange One Stop Centre (IOSC)</strong> model — pioneered by the Rwanda National Police — brings together medical, psychosocial, legal, and law enforcement support for GBV survivors under a single roof. No survivor needs to travel between multiple institutions to access justice and care.
+        </p>
+        <p class="text-gray-600 leading-relaxed mb-8">
+          The <strong>GBV Management Information System</strong> digitises every step of this process: from the moment a case is reported, through investigation, referral and closure — maintaining confidentiality, accountability, and oversight at every stage.
+        </p>
+
+        <div class="grid sm:grid-cols-2 gap-4">
+          <div class="flex items-start gap-3 p-4 bg-blue-50 rounded-xl">
+            <div class="w-9 h-9 bg-rnp-blue/10 rounded-lg flex items-center justify-center flex-shrink-0">
+              <svg class="w-5 h-5 text-rnp-blue" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/>
+              </svg>
+            </div>
+            <div>
+              <p class="font-semibold text-rnp-navy text-sm">Strictly Confidential</p>
+              <p class="text-gray-500 text-xs mt-0.5">All survivor data encrypted and access-controlled by role</p>
+            </div>
+          </div>
+
+          <div class="flex items-start gap-3 p-4 bg-green-50 rounded-xl">
+            <div class="w-9 h-9 bg-rnp-green/10 rounded-lg flex items-center justify-center flex-shrink-0">
+              <svg class="w-5 h-5 text-rnp-green" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/>
+              </svg>
+            </div>
+            <div>
+              <p class="font-semibold text-rnp-navy text-sm">Rights-Based Approach</p>
+              <p class="text-gray-500 text-xs mt-0.5">Survivor dignity and safety at the centre of every decision</p>
+            </div>
+          </div>
+
+          <div class="flex items-start gap-3 p-4 bg-yellow-50 rounded-xl">
+            <div class="w-9 h-9 bg-rnp-gold/10 rounded-lg flex items-center justify-center flex-shrink-0">
+              <svg class="w-5 h-5 text-rnp-gold" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/>
+              </svg>
+            </div>
+            <div>
+              <p class="font-semibold text-rnp-navy text-sm">Rapid Response</p>
+              <p class="text-gray-500 text-xs mt-0.5">Real-time case tracking and escalation alerts</p>
+            </div>
+          </div>
+
+          <div class="flex items-start gap-3 p-4 bg-red-50 rounded-xl">
+            <div class="w-9 h-9 bg-rnp-red/10 rounded-lg flex items-center justify-center flex-shrink-0">
+              <svg class="w-5 h-5 text-rnp-red" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0"/>
+              </svg>
+            </div>
+            <div>
+              <p class="font-semibold text-rnp-navy text-sm">Multi-Agency Collaboration</p>
+              <p class="text-gray-500 text-xs mt-0.5">Police, hospitals, courts and social services connected</p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</section>
+
+
+<!-- ══════════════════════════════════════════════
+     FEATURES
+══════════════════════════════════════════════ -->
+<section id="features" class="py-20 lg:py-28 bg-gray-50">
+  <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+
+    <div class="text-center max-w-2xl mx-auto mb-14 reveal">
+      <div class="divider mx-auto mb-5"></div>
+      <p class="text-rnp-mid font-semibold text-sm uppercase tracking-widest mb-3">System Features</p>
+      <h2 class="text-3xl lg:text-4xl font-extrabold text-rnp-navy leading-tight">
+        Everything Needed to Fight GBV — In One Platform
+      </h2>
+    </div>
+
+    <div class="grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
+
+      <!-- Feature 1 -->
+      <div class="feature-card reveal bg-white rounded-2xl p-7 shadow-sm border border-gray-100">
+        <div class="w-12 h-12 bg-rnp-blue rounded-xl flex items-center justify-center mb-5">
+          <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+          </svg>
+        </div>
+        <h3 class="text-rnp-navy font-bold text-lg mb-2">Case Registration</h3>
+        <p class="text-gray-500 text-sm leading-relaxed">Register GBV cases digitally with full survivor and suspect profiles, incident details, location data, and priority classification.</p>
+      </div>
+
+      <!-- Feature 2 -->
+      <div class="feature-card reveal bg-white rounded-2xl p-7 shadow-sm border border-gray-100" style="transition-delay:0.05s">
+        <div class="w-12 h-12 bg-rnp-mid rounded-xl flex items-center justify-center mb-5">
+          <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
+          </svg>
+        </div>
+        <h3 class="text-rnp-navy font-bold text-lg mb-2">Investigation Tracking</h3>
+        <p class="text-gray-500 text-sm leading-relaxed">Log every investigation action, track assigned officers, set next-action dates, and maintain a full audit trail of case progress.</p>
+      </div>
+
+      <!-- Feature 3 -->
+      <div class="feature-card reveal bg-white rounded-2xl p-7 shadow-sm border border-gray-100" style="transition-delay:0.1s">
+        <div class="w-12 h-12 bg-rnp-gold rounded-xl flex items-center justify-center mb-5">
+          <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"/>
+          </svg>
+        </div>
+        <h3 class="text-rnp-navy font-bold text-lg mb-2">Smart Notifications</h3>
+        <p class="text-gray-500 text-sm leading-relaxed">Commanders receive instant alerts for new cases, officer updates and stale cases. Officers are notified the moment they are assigned a case.</p>
+      </div>
+
+      <!-- Feature 4 -->
+      <div class="feature-card reveal bg-white rounded-2xl p-7 shadow-sm border border-gray-100" style="transition-delay:0.15s">
+        <div class="w-12 h-12 bg-rnp-green rounded-xl flex items-center justify-center mb-5">
+          <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"/>
+          </svg>
+        </div>
+        <h3 class="text-rnp-navy font-bold text-lg mb-2">Evidence Management</h3>
+        <p class="text-gray-500 text-sm leading-relaxed">Securely upload and store evidence files — photos, documents, audio, medical reports — linked directly to cases with tamper-evident records.</p>
+      </div>
+
+      <!-- Feature 5 -->
+      <div class="feature-card reveal bg-white rounded-2xl p-7 shadow-sm border border-gray-100" style="transition-delay:0.2s">
+        <div class="w-12 h-12 bg-rnp-red rounded-xl flex items-center justify-center mb-5">
+          <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4"/>
+          </svg>
+        </div>
+        <h3 class="text-rnp-navy font-bold text-lg mb-2">Referral Tracking</h3>
+        <p class="text-gray-500 text-sm leading-relaxed">Track referrals to hospitals, courts, shelters, and social services. Monitor completion status and follow-up actions for each referral.</p>
+      </div>
+
+      <!-- Feature 6 -->
+      <div class="feature-card reveal bg-white rounded-2xl p-7 shadow-sm border border-gray-100" style="transition-delay:0.25s">
+        <div class="w-12 h-12 bg-rnp-navy rounded-xl flex items-center justify-center mb-5">
+          <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/>
+          </svg>
+        </div>
+        <h3 class="text-rnp-navy font-bold text-lg mb-2">Reports & Analytics</h3>
+        <p class="text-gray-500 text-sm leading-relaxed">Generate summary reports by type, province, district and month. Export to CSV. Charts and dashboards give commanders instant situational awareness.</p>
+      </div>
+
+    </div>
+  </div>
+</section>
+
+
+<!-- ══════════════════════════════════════════════
+     HOW IT WORKS — Officer & Case
+══════════════════════════════════════════════ -->
+<section id="isange" class="py-20 lg:py-28 bg-white">
+  <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+    <div class="grid lg:grid-cols-2 gap-14 items-center">
+
+      <!-- Text -->
+      <div class="reveal">
+        <div class="divider mb-5"></div>
+        <p class="text-rnp-mid font-semibold text-sm uppercase tracking-widest mb-3">How It Works</p>
+        <h2 class="text-3xl lg:text-4xl font-extrabold text-rnp-navy leading-tight mb-8">
+          From Report to Resolution — Every Step Tracked
+        </h2>
+
+        <div class="space-y-6">
+          <div class="flex gap-4">
+            <div class="flex-shrink-0 w-10 h-10 bg-rnp-blue rounded-full flex items-center justify-center text-white font-bold text-sm">1</div>
+            <div>
+              <h4 class="font-bold text-rnp-navy mb-1">Survivor Arrives / Case Reported</h4>
+              <p class="text-gray-500 text-sm leading-relaxed">A GBV case is reported — in person, by phone, or by a third party. A Data Entry officer registers the case digitally into the system immediately.</p>
+            </div>
+          </div>
+
+          <div class="flex gap-4">
+            <div class="flex-shrink-0 w-10 h-10 bg-rnp-mid rounded-full flex items-center justify-center text-white font-bold text-sm">2</div>
+            <div>
+              <h4 class="font-bold text-rnp-navy mb-1">Commander Assigns an Officer</h4>
+              <p class="text-gray-500 text-sm leading-relaxed">The Admin or Commander receives an instant notification, reviews the case, sets priority and assigns a qualified investigating officer.</p>
+            </div>
+          </div>
+
+          <div class="flex gap-4">
+            <div class="flex-shrink-0 w-10 h-10 bg-rnp-gold rounded-full flex items-center justify-center text-white font-bold text-sm">3</div>
+            <div>
+              <h4 class="font-bold text-rnp-navy mb-1">Investigation & Evidence Collection</h4>
+              <p class="text-gray-500 text-sm leading-relaxed">The assigned officer logs all actions — interviews, evidence collected, referrals made — directly in the system. Every update notifies command.</p>
+            </div>
+          </div>
+
+          <div class="flex gap-4">
+            <div class="flex-shrink-0 w-10 h-10 bg-rnp-green rounded-full flex items-center justify-center text-white font-bold text-sm">4</div>
+            <div>
+              <h4 class="font-bold text-rnp-navy mb-1">Resolution & Reporting</h4>
+              <p class="text-gray-500 text-sm leading-relaxed">Cases are closed, referred or escalated with full documentation. Reports are generated for national statistics, oversight and policy-making.</p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Image -->
+      <div class="reveal" style="transition-delay:0.2s">
+        <div class="relative rounded-2xl overflow-hidden shadow-2xl">
+          <img src="/images/Isange_officer_registering case.jpg"
+               alt="Officer registering a GBV case at Isange One Stop Centre"
+               class="w-full h-80 lg:h-[500px] object-cover parallax-img">
+          <div class="absolute inset-0 bg-gradient-to-t from-rnp-navy/70 via-transparent to-transparent"></div>
+          <div class="absolute bottom-6 left-6 right-6">
+            <p class="text-white font-semibold text-sm leading-snug">
+              "Every report matters. Our officers are trained to handle each case with professionalism and compassion."
+            </p>
+            <p class="text-rnp-gold text-xs mt-2 font-medium">— Rwanda National Police, GBV Unit</p>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</section>
+
+
+<!-- ══════════════════════════════════════════════
+     QUOTE BAR
+══════════════════════════════════════════════ -->
+<div class="quote-bar py-14">
+  <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center reveal">
+    <svg class="w-10 h-10 text-rnp-gold mx-auto mb-4 opacity-60" fill="currentColor" viewBox="0 0 24 24">
+      <path d="M14.017 21v-7.391c0-5.704 3.731-9.57 8.983-10.609l.995 2.151c-2.432.917-3.995 3.638-3.995 5.849h4v10h-9.983zm-14.017 0v-7.391c0-5.704 3.748-9.57 9-10.609l.996 2.151c-2.433.917-3.996 3.638-3.996 5.849h3.983v10h-9.983z"/>
+    </svg>
+    <p class="text-2xl lg:text-3xl font-bold text-white leading-snug">
+      "Gender-based violence is not a private matter — it is a public crime that demands a public response."
+    </p>
+    <p class="text-rnp-gold mt-5 font-semibold text-sm tracking-wide">Rwanda National Police · GBV Policy Framework</p>
+  </div>
+</div>
+
+
+<!-- ══════════════════════════════════════════════
+     AWARENESS — Campaign Images
+══════════════════════════════════════════════ -->
+<section id="awareness" class="py-20 lg:py-28 bg-gray-50">
+  <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+
+    <div class="text-center max-w-2xl mx-auto mb-14 reveal">
+      <div class="divider mx-auto mb-5"></div>
+      <p class="text-rnp-mid font-semibold text-sm uppercase tracking-widest mb-3">Awareness & Education</p>
+      <h2 class="text-3xl lg:text-4xl font-extrabold text-rnp-navy leading-tight">
+        There Is No Excuse for Gender-Based Violence
+      </h2>
+    </div>
+
+    <!-- Campaign image full width -->
+    <div class="reveal rounded-2xl overflow-hidden shadow-xl mb-10 relative">
+      <img src="/images/there is no excuse for GBV.jpg"
+           alt="There is no excuse for GBV — Rwanda National Police Campaign"
+           class="w-full h-64 md:h-96 object-cover object-center">
+      <div class="absolute inset-0 bg-gradient-to-r from-rnp-navy/70 to-transparent flex items-center">
+        <div class="max-w-lg px-8 lg:px-14">
+          <h3 class="text-white text-2xl lg:text-3xl font-extrabold leading-tight mb-4">
+            Join Rwanda's Commitment to Zero Tolerance on GBV
+          </h3>
+          <p class="text-gray-200 text-sm leading-relaxed">
+            The Rwanda National Police is committed to a Rwanda where every person — regardless of gender, age or background — lives free from violence and fear.
+          </p>
+        </div>
+      </div>
+    </div>
+
+    <!-- GBV Types Grid -->
+    <div class="grid md:grid-cols-2 gap-8">
+
+      <!-- Sexual Violence -->
+      <div class="reveal group rounded-2xl overflow-hidden shadow-sm bg-white border border-gray-100">
+        <div class="relative h-56 overflow-hidden">
+          <img src="/images/sexual_violance.jpg"
+               alt="Sexual violence awareness"
+               class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500">
+          <div class="absolute inset-0 bg-rnp-navy/60 flex items-end p-5">
+            <div>
+              <span class="bg-red-500 text-white text-xs font-bold px-3 py-1 rounded-full uppercase tracking-wider">Sexual Violence</span>
+            </div>
+          </div>
+        </div>
+        <div class="p-6">
+          <h4 class="text-rnp-navy font-bold text-lg mb-2">Recognising Sexual Violence</h4>
+          <p class="text-gray-500 text-sm leading-relaxed mb-4">
+            Sexual violence — including rape, sexual assault, harassment and exploitation — is a crime under Rwandan law. Survivors deserve immediate medical care, legal protection and psychosocial support.
+          </p>
+          <div class="flex items-center gap-2 text-rnp-blue text-sm font-semibold">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z"/>
+            </svg>
+            Report: 3029 (Toll-Free)
+          </div>
+        </div>
+      </div>
+
+      <!-- GBV Campaign -->
+      <div class="reveal group rounded-2xl overflow-hidden shadow-sm bg-white border border-gray-100" style="transition-delay:0.1s">
+        <div class="relative h-56 overflow-hidden">
+          <img src="/images/GBV_ compain.jpeg"
+               onerror="this.src='/images/GBV_ compain.jpeg.avif'"
+               alt="GBV Campaign Rwanda"
+               class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500">
+          <div class="absolute inset-0 bg-rnp-navy/60 flex items-end p-5">
+            <div>
+              <span class="bg-rnp-gold text-rnp-navy text-xs font-bold px-3 py-1 rounded-full uppercase tracking-wider">Community Campaign</span>
+            </div>
+          </div>
+        </div>
+        <div class="p-6">
+          <h4 class="text-rnp-navy font-bold text-lg mb-2">National GBV Prevention Campaign</h4>
+          <p class="text-gray-500 text-sm leading-relaxed mb-4">
+            The Rwanda National Police leads nationwide campaigns in partnership with communities, schools and civil society to educate, raise awareness, and shift social norms that enable gender-based violence.
+          </p>
+          <div class="flex items-center gap-2 text-rnp-blue text-sm font-semibold">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+            </svg>
+            Learn more about the campaign
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</section>
+
+
+<!-- ══════════════════════════════════════════════
+     GBV TYPES
+══════════════════════════════════════════════ -->
+<section class="py-20 bg-rnp-navy">
+  <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+
+    <div class="text-center max-w-2xl mx-auto mb-12 reveal">
+      <div class="divider mx-auto mb-5"></div>
+      <h2 class="text-3xl font-extrabold text-white mb-3">Forms of GBV We Address</h2>
+      <p class="text-gray-400 text-sm">The GBV MIS handles all categories of gender-based violence cases</p>
+    </div>
+
+    <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
+
+      <!-- Domestic Violence -->
+      <div class="reveal group text-center p-6 bg-white/5 rounded-2xl border border-white/10 hover:bg-white/10 hover:border-rnp-red/40 transition-all duration-300 cursor-default">
+        <div class="w-14 h-14 mx-auto mb-4 rounded-xl bg-rnp-red/20 border border-rnp-red/30 flex items-center justify-center group-hover:bg-rnp-red/30 group-hover:scale-110 transition-all duration-300">
+          <svg class="w-7 h-7 text-red-400" fill="none" stroke="currentColor" stroke-width="1.6" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/>
+          </svg>
+        </div>
+        <p class="text-white font-semibold text-xs leading-snug">Domestic Violence</p>
+        <p class="text-gray-500 text-xs mt-1">Abuse within the home</p>
+      </div>
+
+      <!-- Sexual Violence -->
+      <div class="reveal group text-center p-6 bg-white/5 rounded-2xl border border-white/10 hover:bg-white/10 hover:border-purple-500/40 transition-all duration-300 cursor-default" style="transition-delay:0.05s">
+        <div class="w-14 h-14 mx-auto mb-4 rounded-xl bg-purple-500/20 border border-purple-500/30 flex items-center justify-center group-hover:bg-purple-500/30 group-hover:scale-110 transition-all duration-300">
+          <svg class="w-7 h-7 text-purple-400" fill="none" stroke="currentColor" stroke-width="1.6" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M18.364 5.636a9 9 0 010 12.728M15.536 8.464a5 5 0 010 7.072M6.343 6.343a9 9 0 000 12.728M9.172 9.172a5 5 0 000 6.656M12 12h.01"/>
+          </svg>
+        </div>
+        <p class="text-white font-semibold text-xs leading-snug">Sexual Violence</p>
+        <p class="text-gray-500 text-xs mt-1">Assault &amp; exploitation</p>
+      </div>
+
+      <!-- Child Abuse -->
+      <div class="reveal group text-center p-6 bg-white/5 rounded-2xl border border-white/10 hover:bg-white/10 hover:border-orange-500/40 transition-all duration-300 cursor-default" style="transition-delay:0.1s">
+        <div class="w-14 h-14 mx-auto mb-4 rounded-xl bg-orange-500/20 border border-orange-500/30 flex items-center justify-center group-hover:bg-orange-500/30 group-hover:scale-110 transition-all duration-300">
+          <svg class="w-7 h-7 text-orange-400" fill="none" stroke="currentColor" stroke-width="1.6" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"/>
+          </svg>
+        </div>
+        <p class="text-white font-semibold text-xs leading-snug">Child Abuse</p>
+        <p class="text-gray-500 text-xs mt-1">Harm to minors</p>
+      </div>
+
+      <!-- Stalking & Harassment -->
+      <div class="reveal group text-center p-6 bg-white/5 rounded-2xl border border-white/10 hover:bg-white/10 hover:border-yellow-500/40 transition-all duration-300 cursor-default" style="transition-delay:0.15s">
+        <div class="w-14 h-14 mx-auto mb-4 rounded-xl bg-yellow-500/20 border border-yellow-500/30 flex items-center justify-center group-hover:bg-yellow-500/30 group-hover:scale-110 transition-all duration-300">
+          <svg class="w-7 h-7 text-yellow-400" fill="none" stroke="currentColor" stroke-width="1.6" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
+            <path stroke-linecap="round" stroke-linejoin="round" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/>
+          </svg>
+        </div>
+        <p class="text-white font-semibold text-xs leading-snug">Stalking &amp; Harassment</p>
+        <p class="text-gray-500 text-xs mt-1">Unwanted pursuit</p>
+      </div>
+
+      <!-- Forced Marriage -->
+      <div class="reveal group text-center p-6 bg-white/5 rounded-2xl border border-white/10 hover:bg-white/10 hover:border-pink-500/40 transition-all duration-300 cursor-default" style="transition-delay:0.2s">
+        <div class="w-14 h-14 mx-auto mb-4 rounded-xl bg-pink-500/20 border border-pink-500/30 flex items-center justify-center group-hover:bg-pink-500/30 group-hover:scale-110 transition-all duration-300">
+          <svg class="w-7 h-7 text-pink-400" fill="none" stroke="currentColor" stroke-width="1.6" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"/>
+            <line x1="4" y1="4" x2="20" y2="20" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/>
+          </svg>
+        </div>
+        <p class="text-white font-semibold text-xs leading-snug">Forced Marriage</p>
+        <p class="text-gray-500 text-xs mt-1">Coerced union</p>
+      </div>
+
+      <!-- Economic Abuse -->
+      <div class="reveal group text-center p-6 bg-white/5 rounded-2xl border border-white/10 hover:bg-white/10 hover:border-rnp-gold/40 transition-all duration-300 cursor-default" style="transition-delay:0.25s">
+        <div class="w-14 h-14 mx-auto mb-4 rounded-xl bg-rnp-gold/20 border border-rnp-gold/30 flex items-center justify-center group-hover:bg-rnp-gold/30 group-hover:scale-110 transition-all duration-300">
+          <svg class="w-7 h-7 text-rnp-gold" fill="none" stroke="currentColor" stroke-width="1.6" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+          </svg>
+        </div>
+        <p class="text-white font-semibold text-xs leading-snug">Economic Abuse</p>
+        <p class="text-gray-500 text-xs mt-1">Financial control</p>
+      </div>
+
+    </div>
+
+  </div>
+</section>
+
+
+<!-- ══════════════════════════════════════════════
+     CTA — Login
+══════════════════════════════════════════════ -->
+<section class="py-20 bg-gradient-to-br from-rnp-blue via-rnp-mid to-rnp-light relative overflow-hidden">
+  <!-- Decorative circles -->
+  <div class="absolute -top-20 -right-20 w-80 h-80 bg-white/5 rounded-full"></div>
+  <div class="absolute -bottom-20 -left-20 w-96 h-96 bg-white/5 rounded-full"></div>
+
+  <div class="relative max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 text-center reveal">
+    <img src="/RNP.png" alt="RNP" class="w-16 h-16 object-contain mx-auto mb-6 opacity-90">
+    <h2 class="text-3xl lg:text-4xl font-extrabold text-white mb-5 leading-tight">
+      Authorised Personnel Login
+    </h2>
+    <p class="text-blue-100 text-base leading-relaxed mb-8">
+      This system is restricted to authorised Rwanda National Police officers and affiliated personnel. Access your dashboard to manage cases, investigations, evidence and reports.
+    </p>
+    <a href="/app"
+       class="inline-flex items-center gap-3 px-8 py-4 bg-white text-rnp-blue font-bold rounded-xl text-sm hover:bg-rnp-gold hover:text-rnp-navy transition-all shadow-xl hover:-translate-y-1">
+      <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 16l-4-4m0 0l4-4m-4 4h14m-5 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h7a3 3 0 013 3v1"/>
+      </svg>
+      Login to GBV MIS
+    </a>
+    <p class="text-blue-200/70 text-xs mt-5">If you need access credentials, contact your station commander or system administrator.</p>
+  </div>
+</section>
+
+
+<!-- ══════════════════════════════════════════════
+     CONTACT / FOOTER
+══════════════════════════════════════════════ -->
+<footer id="contact" class="bg-rnp-navy border-t border-white/10">
+  <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-14">
+    <div class="grid md:grid-cols-2 lg:grid-cols-4 gap-10 mb-10">
+
+      <!-- Brand -->
+      <div class="lg:col-span-2">
+        <div class="flex items-center gap-3 mb-4">
+          <img src="/RNP.png" alt="RNP Logo" class="h-10 w-10 object-contain">
+          <div>
+            <p class="text-white font-bold text-sm">Rwanda National Police</p>
+            <p class="text-rnp-gold text-xs font-medium tracking-wider">GBV Management Information System</p>
+          </div>
+        </div>
+        <p class="text-gray-400 text-sm leading-relaxed max-w-sm">
+          Dedicated to protecting GBV survivors, ensuring accountability, and working towards a Rwanda free from gender-based violence.
+        </p>
+        <div class="mt-5 flex items-center gap-3 bg-rnp-red/20 border border-rnp-red/30 rounded-xl px-4 py-3 max-w-xs">
+          <svg class="w-5 h-5 text-red-400 flex-shrink-0" fill="currentColor" viewBox="0 0 24 24">
+            <path d="M6.62 10.79c1.44 2.83 3.76 5.14 6.59 6.59l2.2-2.2c.27-.27.67-.36 1.02-.24 1.12.37 2.33.57 3.57.57.55 0 1 .45 1 1V20c0 .55-.45 1-1 1-9.39 0-17-7.61-17-17 0-.55.45-1 1-1h3.5c.55 0 1 .45 1 1 0 1.25.2 2.45.57 3.57.11.35.03.74-.25 1.02l-2.2 2.2z"/>
+          </svg>
+          <div>
+            <p class="text-red-300 text-xs font-semibold">Emergency GBV Hotline</p>
+            <p class="text-white font-bold">3029 <span class="text-gray-400 text-xs font-normal">· Toll-Free · 24/7</span></p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Quick Links -->
+      <div>
+        <p class="text-white font-semibold text-sm mb-4 uppercase tracking-wider">Quick Links</p>
+        <ul class="space-y-3 text-sm text-gray-400">
+          <li><a href="#about"     class="hover:text-rnp-gold transition-colors">About the System</a></li>
+          <li><a href="#features"  class="hover:text-rnp-gold transition-colors">System Features</a></li>
+          <li><a href="#isange"    class="hover:text-rnp-gold transition-colors">Isange One Stop Centre</a></li>
+          <li><a href="#awareness" class="hover:text-rnp-gold transition-colors">GBV Awareness</a></li>
+          <li><a href="/app"       class="hover:text-rnp-gold transition-colors">Staff Login</a></li>
+        </ul>
+      </div>
+
+      <!-- Contact -->
+      <div>
+        <p class="text-white font-semibold text-sm mb-4 uppercase tracking-wider">Contact</p>
+        <ul class="space-y-3 text-sm text-gray-400">
+          <li class="flex items-start gap-2">
+            <svg class="w-4 h-4 text-rnp-gold mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"/>
+            </svg>
+            <span>Rwanda National Police HQ<br>Kigali, Rwanda</span>
+          </li>
+          <li class="flex items-center gap-2">
+            <svg class="w-4 h-4 text-rnp-gold flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z"/>
+            </svg>
+            <span>+250 788 311 155</span>
+          </li>
+          <li class="flex items-center gap-2">
+            <svg class="w-4 h-4 text-rnp-gold flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 12a9 9 0 01-9 9m9-9a9 9 0 00-9-9m9 9H3m9 9a9 9 0 01-9-9m9 9c1.657 0 3-4.03 3-9s-1.343-9-3-9m0 18c-1.657 0-3-4.03-3-9s1.343-9 3-9"/>
+            </svg>
+            <a href="https://www.police.gov.rw" target="_blank" class="hover:text-rnp-gold transition-colors">www.police.gov.rw</a>
+          </li>
+        </ul>
+      </div>
+
+    </div>
+
+    <!-- Bottom bar -->
+    <div class="border-t border-white/10 pt-6 flex flex-col sm:flex-row items-center justify-between gap-3">
+      <p class="text-gray-500 text-xs">
+        © 2026 Rwanda National Police — GBV Management Information System. All rights reserved.
+      </p>
+      <p class="text-gray-600 text-xs">
+        Strictly Confidential · Authorised Access Only
+      </p>
+    </div>
+  </div>
+</footer>
+
+
+<!-- ══════════════════════════════════════════════
+     SCRIPTS
+══════════════════════════════════════════════ -->
+<script>
+// Mobile menu
+function toggleMenu() {
+  const menu = document.getElementById('mobile-menu');
+  menu.classList.toggle('open');
+}
+
+// Close menu on outside click
+document.addEventListener('click', (e) => {
+  const nav = document.getElementById('navbar');
+  if (!nav.contains(e.target)) {
+    document.getElementById('mobile-menu').classList.remove('open');
+  }
+});
+
+// Scroll reveal
+const revealObserver = new IntersectionObserver((entries) => {
+  entries.forEach(e => {
+    if (e.isIntersecting) {
+      e.target.classList.add('visible');
+      revealObserver.unobserve(e.target);
+    }
+  });
+}, { threshold: 0.12, rootMargin: '0px 0px -40px 0px' });
+
+document.querySelectorAll('.reveal').forEach(el => revealObserver.observe(el));
+
+// Animated counters
+function animateCounter(el, target, duration = 1800) {
+  let start = 0;
+  const step = Math.ceil(target / (duration / 16));
+  const timer = setInterval(() => {
+    start += step;
+    if (start >= target) { start = target; clearInterval(timer); }
+    el.textContent = start + (el.dataset.suffix || '');
+  }, 16);
+}
+
+const counterObserver = new IntersectionObserver((entries) => {
+  entries.forEach(e => {
+    if (e.isIntersecting) {
+      const target = parseInt(e.target.dataset.target);
+      animateCounter(e.target, target);
+      counterObserver.unobserve(e.target);
+    }
+  });
+}, { threshold: 0.5 });
+
+document.querySelectorAll('[data-target]').forEach(el => counterObserver.observe(el));
+
+// Sticky nav shadow
+window.addEventListener('scroll', () => {
+  const nav = document.getElementById('navbar');
+  if (window.scrollY > 50) {
+    nav.classList.add('shadow-2xl');
+  } else {
+    nav.classList.remove('shadow-2xl');
+  }
+});
+
+// Smooth scroll
+document.querySelectorAll('a[href^="#"]').forEach(a => {
+  a.addEventListener('click', e => {
+    e.preventDefault();
+    const target = document.querySelector(a.getAttribute('href'));
+    if (target) target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  });
+});
+</script>
+
+</body>
+</html>
