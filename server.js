@@ -114,6 +114,47 @@ function logAudit(userId, serviceNumber, action, targetTable, targetId, descript
   );
 }
 
+// ── Notification Helpers ───────────────────────────────────────────
+function createNotification(userId, title, message, type, caseId) {
+  db.run(
+    `INSERT INTO notifications (user_id, title, message, type, case_id) VALUES (?,?,?,?,?)`,
+    [userId, title, message, type || 'info', caseId || null],
+    err => { if (err) console.error('Notification error:', err.message); }
+  );
+}
+
+function notifyAdminsCommanders(title, message, type, caseId) {
+  db.all(`SELECT id FROM users WHERE role IN ('Admin','Commander') AND is_active = 1`, (err, rows) => {
+    if (err || !rows) return;
+    rows.forEach(u => createNotification(u.id, title, message, type, caseId));
+  });
+}
+
+// ── Stale Case Delay Check (runs every 6 hours) ────────────────────
+function checkStaleCases() {
+  db.all(`
+    SELECT c.id, c.case_number, c.incident_type, c.assigned_to,
+           u.full_name as officer_name,
+           MAX(cu.created_at) as last_update
+    FROM cases c
+    LEFT JOIN users u ON c.assigned_to = u.id
+    LEFT JOIN case_updates cu ON cu.case_id = c.id
+    WHERE c.status IN ('Open','Under Investigation')
+      AND c.assigned_to IS NOT NULL
+    GROUP BY c.id
+    HAVING last_update IS NULL OR last_update < datetime('now','-7 days')
+  `, (err, rows) => {
+    if (err || !rows || rows.length === 0) return;
+    rows.forEach(c => {
+      const msg = `Case ${c.case_number} (${c.incident_type}) assigned to ${c.officer_name || 'Unknown'} has had no updates for over 7 days. Please follow up.`;
+      notifyAdminsCommanders('⚠️ Stale Case Alert', msg, 'alert', c.id);
+      console.log(`Stale case alert sent for ${c.case_number}`);
+    });
+  });
+}
+setInterval(checkStaleCases, 6 * 60 * 60 * 1000); // every 6 hours
+setTimeout(checkStaleCases, 10000);                // also run 10s after startup
+
 // ── Validation helper ──────────────────────────────────────────────
 function validate(req, res) {
   const errors = validationResult(req);
@@ -133,7 +174,7 @@ function initializeDatabase() {
       service_number  TEXT UNIQUE NOT NULL,
       password_hash   TEXT NOT NULL,
       full_name       TEXT NOT NULL,
-      role            TEXT NOT NULL CHECK(role IN ('Admin','Investigator','Commander','Data Entry')),
+      role            TEXT NOT NULL CHECK(role IN ('Admin','Investigator','Commander','Police Officer','Medical Entry Officer')),
       station         TEXT,
       email           TEXT,
       phone           TEXT,
@@ -243,6 +284,17 @@ function initializeDatabase() {
       description    TEXT,
       ip_address     TEXT
     )`, err => { if (err) console.error('audit_log:', err.message); });
+
+    db.run(`CREATE TABLE IF NOT EXISTS notifications (
+      id         INTEGER PRIMARY KEY AUTOINCREMENT,
+      user_id    INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+      title      TEXT NOT NULL,
+      message    TEXT NOT NULL,
+      type       TEXT DEFAULT 'info' CHECK(type IN ('info','assignment','update','alert')),
+      case_id    INTEGER REFERENCES cases(id) ON DELETE SET NULL,
+      is_read    INTEGER DEFAULT 0,
+      created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+    )`, err => { if (err) console.error('notifications:', err.message); });
 
     // Default admin
     const pwd = bcrypt.hashSync('admin123', 10);
@@ -407,8 +459,8 @@ function seedDatabase() {
       { sn: 'RNP-0010', name: 'Supt. Rurangwa Jean',     role: 'Commander',     station: 'Kigali City HQ' },
       { sn: 'RNP-0011', name: 'Supt. Nyiraneza Alice',   role: 'Commander',     station: 'Northern Province HQ' },
       { sn: 'RNP-0012', name: 'Supt. Bizimana Paul',     role: 'Commander',     station: 'Southern Province HQ' },
-      { sn: 'RNP-0020', name: 'Cst. Uwase Claudine',     role: 'Data Entry',    station: 'Kimironko PS' },
-      { sn: 'RNP-0021', name: 'Cst. Ndizeye Patrick',    role: 'Data Entry',    station: 'Musanze PS' },
+      { sn: 'RNP-0020', name: 'Cst. Uwase Claudine',     role: 'Medical Entry Officer',    station: 'Kimironko PS' },
+      { sn: 'RNP-0021', name: 'Cst. Ndizeye Patrick',    role: 'Medical Entry Officer',    station: 'Musanze PS' },
     ];
 
     const defaultPwd = bcrypt.hashSync('Rnp@2024', 10);
@@ -508,7 +560,7 @@ db.get("SELECT sql FROM sqlite_master WHERE type='table' AND name='users'", (err
       service_number  TEXT UNIQUE NOT NULL,
       password_hash   TEXT NOT NULL,
       full_name       TEXT NOT NULL,
-      role            TEXT NOT NULL CHECK(role IN ('Admin','Investigator','Commander','Data Entry')),
+      role            TEXT NOT NULL CHECK(role IN ('Admin','Investigator','Commander','Police Officer','Medical Entry Officer')),
       station         TEXT, email TEXT, phone TEXT,
       is_active       INTEGER DEFAULT 1,
       created_at      DATETIME DEFAULT CURRENT_TIMESTAMP,
@@ -520,7 +572,8 @@ db.get("SELECT sql FROM sqlite_master WHERE type='table' AND name='users'", (err
                 WHEN 'admin'        THEN 'Admin'
                 WHEN 'investigator' THEN 'Investigator'
                 WHEN 'commander'    THEN 'Commander'
-                WHEN 'data_entry'   THEN 'Data Entry'
+                WHEN 'data_entry'   THEN 'Medical Entry Officer'
+                WHEN 'data entry'   THEN 'Medical Entry Officer'
                 ELSE role
               END,
               station, email, phone, is_active, created_at, last_login
@@ -537,6 +590,66 @@ db.get("SELECT sql FROM sqlite_master WHERE type='table' AND name='users'", (err
     )`);
     db.run('PRAGMA foreign_keys = ON');
     db.run('', () => console.log('Role migration complete ✓'));
+  });
+});
+
+// ── Migration: rename 'Data Entry' → 'Medical Entry Officer' and add 'Police Officer' ──
+db.get("SELECT sql FROM sqlite_master WHERE type='table' AND name='users'", (err, row) => {
+  if (!row || !row.sql) return;
+  const needsRoleUpgrade = row.sql.includes("'Data Entry'") || !row.sql.includes("'Police Officer'");
+  if (!needsRoleUpgrade) return;
+  console.log('Running role rename migration (Data Entry → Medical Entry Officer)...');
+  db.serialize(() => {
+    db.run('PRAGMA foreign_keys = OFF');
+    db.run('DROP TABLE IF EXISTS sessions'); // drop before rename to avoid dangling FK
+    db.run('ALTER TABLE users RENAME TO _users_pre_role');
+    db.run(`CREATE TABLE users (
+      id              INTEGER PRIMARY KEY AUTOINCREMENT,
+      service_number  TEXT UNIQUE NOT NULL,
+      password_hash   TEXT NOT NULL,
+      full_name       TEXT NOT NULL,
+      role            TEXT NOT NULL CHECK(role IN ('Admin','Investigator','Commander','Police Officer','Medical Entry Officer')),
+      station         TEXT, email TEXT, phone TEXT,
+      is_active       INTEGER DEFAULT 1,
+      created_at      DATETIME DEFAULT CURRENT_TIMESTAMP,
+      last_login      DATETIME
+    )`);
+    db.run(`INSERT INTO users
+            SELECT id, service_number, password_hash, full_name,
+              CASE role
+                WHEN 'Data Entry' THEN 'Medical Entry Officer'
+                WHEN 'Officer'    THEN 'Police Officer'
+                ELSE role
+              END,
+              station, email, phone, is_active, created_at, last_login
+            FROM _users_pre_role`);
+    db.run('DROP TABLE _users_pre_role');
+    db.run(`CREATE TABLE IF NOT EXISTS sessions (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      user_id INTEGER NOT NULL,
+      token TEXT UNIQUE NOT NULL,
+      created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+      expires_at DATETIME NOT NULL,
+      FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+    )`);
+    // Recreate audit_log with corrected FK
+    db.run(`CREATE TABLE IF NOT EXISTS _audit_backup AS SELECT * FROM audit_log`);
+    db.run(`DROP TABLE IF EXISTS audit_log`);
+    db.run(`CREATE TABLE audit_log (
+      id             INTEGER PRIMARY KEY AUTOINCREMENT,
+      timestamp      DATETIME DEFAULT CURRENT_TIMESTAMP,
+      user_id        INTEGER REFERENCES users(id),
+      service_number TEXT,
+      action         TEXT NOT NULL,
+      target_table   TEXT,
+      target_id      INTEGER,
+      description    TEXT,
+      ip_address     TEXT
+    )`);
+    db.run(`INSERT OR IGNORE INTO audit_log SELECT * FROM _audit_backup`);
+    db.run(`DROP TABLE IF EXISTS _audit_backup`);
+    db.run('PRAGMA foreign_keys = ON');
+    db.run('', () => console.log('Role rename migration complete ✓'));
   });
 });
 
@@ -562,9 +675,11 @@ db.get("SELECT sql FROM sqlite_master WHERE type='table' AND name='sessions'", (
 });
 
 // ── Safe static routes ─────────────────────────────────────────────
-app.get('/',        (req, res) => res.sendFile(path.join(__dirname, 'GBV_MIS.html')));
-app.get('/RNP.png', (req, res) => res.sendFile(path.join(__dirname, 'RNP.png')));
-app.use('/uploads', requireAuth, express.static(UPLOADS_DIR));
+app.get('/',          (req, res) => res.sendFile(path.join(__dirname, 'homepage.html')));
+app.get('/app',       (req, res) => res.sendFile(path.join(__dirname, 'GBV_MIS.html')));
+app.get('/RNP.png',   (req, res) => res.sendFile(path.join(__dirname, 'RNP.png')));
+app.use('/images',    express.static(path.join(__dirname, 'images')));
+app.use('/uploads',   requireAuth, express.static(UPLOADS_DIR));
 
 // Clean expired sessions every hour
 setInterval(() => db.run(`DELETE FROM sessions WHERE expires_at <= datetime('now')`), 3600000);
@@ -690,9 +805,20 @@ app.post('/api/cases', requireAuth,
        station, d.province||null, d.district||null, d.sector||null],
       function(err) {
         if (err) return res.status(500).json({ error: 'Failed to create case', detail: err.message });
-        logAudit(req.user.id, req.user.service_number, 'CASE_CREATE', 'cases', this.lastID,
+        const newId = this.lastID;
+        logAudit(req.user.id, req.user.service_number, 'CASE_CREATE', 'cases', newId,
           `Created case ${caseNumber}`, req.ip);
-        res.json({ success: true, caseId: this.lastID, caseNumber });
+        // Notify all Admins & Commanders of new case
+        const notifMsg = `New ${d.incident_type} case ${caseNumber} registered by ${req.user.fullName} (${req.user.station || 'Unknown Station'}).`;
+        notifyAdminsCommanders('📋 New Case Registered', notifMsg, 'info', newId);
+        // If a specific officer was assigned at registration, notify them too
+        if (d.assigned_to) {
+          createNotification(d.assigned_to,
+            '📌 Case Assigned to You',
+            `Case ${caseNumber} (${d.incident_type}) has been assigned to you by ${req.user.fullName}.`,
+            'assignment', newId);
+        }
+        res.json({ success: true, caseId: newId, caseNumber });
       });
   }
 );
@@ -706,15 +832,52 @@ const ALLOWED_CASE_FIELDS = [
 app.put('/api/cases/:id', requireAuth, (req, res) => {
   const safe = Object.keys(req.body).filter(k => ALLOWED_CASE_FIELDS.includes(k));
   if (!safe.length) return res.status(400).json({ error: 'No valid fields to update' });
-  const fields = safe.map(k => `${k} = ?`).join(', ');
-  const values = [...safe.map(k => req.body[k]), req.params.id];
-  db.run(`UPDATE cases SET ${fields}, updated_at = CURRENT_TIMESTAMP WHERE id = ?`,
-    values, function(err) {
-      if (err) return res.status(500).json({ error: 'Failed to update case' });
-      logAudit(req.user.id, req.user.service_number, 'CASE_UPDATE', 'cases', req.params.id,
-        `Updated: ${safe.join(', ')}`, req.ip);
-      res.json({ success: true });
-    });
+
+  const caseId = parseInt(req.params.id);
+
+  // Fetch existing case first so we can detect assignment changes
+  db.get(`SELECT c.*, u.full_name as current_officer FROM cases c LEFT JOIN users u ON c.assigned_to = u.id WHERE c.id = ?`, [caseId], (fetchErr, existing) => {
+    if (fetchErr || !existing) return res.status(404).json({ error: 'Case not found' });
+
+    const fields = safe.map(k => `${k} = ?`).join(', ');
+    const values = [...safe.map(k => req.body[k]), caseId];
+
+    db.run(`UPDATE cases SET ${fields}, updated_at = CURRENT_TIMESTAMP WHERE id = ?`,
+      values, function(err) {
+        if (err) return res.status(500).json({ error: 'Failed to update case' });
+        logAudit(req.user.id, req.user.service_number, 'CASE_UPDATE', 'cases', caseId,
+          `Updated: ${safe.join(', ')}`, req.ip);
+
+        const newAssignedTo = req.body.assigned_to != null ? parseInt(req.body.assigned_to) || null : undefined;
+
+        // If assigned_to changed, notify new officer + notify admins/commanders
+        if (newAssignedTo !== undefined && newAssignedTo !== existing.assigned_to) {
+          if (newAssignedTo) {
+            createNotification(newAssignedTo,
+              '📌 Case Assigned to You',
+              `Case ${existing.case_number} (${existing.incident_type}) has been assigned to you by ${req.user.fullName}.`,
+              'assignment', caseId);
+          }
+          const changedBy = req.user.fullName;
+          notifyAdminsCommanders(
+            '🔄 Case Reassigned',
+            `Case ${existing.case_number} has been reassigned by ${changedBy}.`,
+            'info', caseId
+          );
+        }
+
+        // Notify admins/commanders of status or priority changes
+        if (req.body.status && req.body.status !== existing.status) {
+          notifyAdminsCommanders(
+            '📊 Case Status Updated',
+            `Case ${existing.case_number} status changed from "${existing.status}" to "${req.body.status}" by ${req.user.fullName}.`,
+            'update', caseId
+          );
+        }
+
+        res.json({ success: true });
+      });
+  });
 });
 
 // Case updates/notes
@@ -733,10 +896,24 @@ app.post('/api/cases/:id/updates', requireAuth,
   (req, res) => {
     if (!validate(req, res)) return;
     const { update_type, description } = req.body;
+    const caseId = parseInt(req.params.id);
     db.run(`INSERT INTO case_updates (case_id,user_id,update_type,description) VALUES (?,?,?,?)`,
-      [req.params.id, req.user.id, update_type||'Note', description],
+      [caseId, req.user.id, update_type||'Note', description],
       function(err) {
         if (err) return res.status(500).json({ error: 'Failed to add update' });
+        // Notify admins/commanders of the progress update
+        db.get(`SELECT case_number, incident_type, assigned_to FROM cases WHERE id = ?`, [caseId], (e, c) => {
+          if (e || !c) return;
+          const title = `📝 Case Update: ${c.case_number}`;
+          const msg   = `${req.user.fullName} added a "${update_type||'Note'}" update on case ${c.case_number} (${c.incident_type}): "${description.slice(0,120)}${description.length > 120 ? '…' : ''}"`;
+          notifyAdminsCommanders(title, msg, 'update', caseId);
+          // Also notify the assigned officer if different from the person making the update
+          if (c.assigned_to && c.assigned_to !== req.user.id) {
+            createNotification(c.assigned_to, title,
+              `A new update was added to your case ${c.case_number} by ${req.user.fullName}.`,
+              'update', caseId);
+          }
+        });
         res.json({ success: true, updateId: this.lastID });
       });
   }
@@ -1019,24 +1196,80 @@ app.get('/api/audit', requireAuth, requireAdmin, (req, res) => {
 });
 
 // ══════════════════════════════════════════════════════════════════
+//  NOTIFICATIONS
+// ══════════════════════════════════════════════════════════════════
+
+// Get notifications for current user (latest 50)
+app.get('/api/notifications', requireAuth, (req, res) => {
+  db.all(`SELECT n.*, c.case_number FROM notifications n
+          LEFT JOIN cases c ON n.case_id = c.id
+          WHERE n.user_id = ?
+          ORDER BY n.created_at DESC LIMIT 50`,
+    [req.user.id], (err, rows) => {
+      if (err) return res.status(500).json({ error: 'Database error' });
+      res.json(rows);
+    });
+});
+
+// Unread count
+app.get('/api/notifications/count', requireAuth, (req, res) => {
+  db.get(`SELECT COUNT(*) as count FROM notifications WHERE user_id = ? AND is_read = 0`,
+    [req.user.id], (err, row) => {
+      if (err) return res.status(500).json({ error: 'Database error' });
+      res.json({ count: row ? row.count : 0 });
+    });
+});
+
+// Mark single notification as read
+app.put('/api/notifications/:id/read', requireAuth, (req, res) => {
+  db.run(`UPDATE notifications SET is_read = 1 WHERE id = ? AND user_id = ?`,
+    [req.params.id, req.user.id], err => {
+      if (err) return res.status(500).json({ error: 'Database error' });
+      res.json({ success: true });
+    });
+});
+
+// Mark all as read
+app.put('/api/notifications/read-all', requireAuth, (req, res) => {
+  db.run(`UPDATE notifications SET is_read = 1 WHERE user_id = ?`,
+    [req.user.id], err => {
+      if (err) return res.status(500).json({ error: 'Database error' });
+      res.json({ success: true });
+    });
+});
+
+// ══════════════════════════════════════════════════════════════════
 //  USERS
 // ══════════════════════════════════════════════════════════════════
 
 app.get('/api/users', requireAuth, (req, res) => {
-  db.all(`SELECT id, service_number, full_name, role, station, email, phone,
-            is_active, created_at, last_login FROM users ORDER BY full_name`,
-    (err, rows) => {
-      if (err) return res.status(500).json({ error: 'Database error' });
-      res.json(rows);
-    });
+  const role = req.user.role;
+  // Admin & Commander see all users; others see only themselves (for assignment dropdown)
+  if (role === 'Admin' || role === 'Commander') {
+    db.all(`SELECT id, service_number, full_name, role, station, email, phone,
+              is_active, created_at, last_login FROM users ORDER BY full_name`,
+      (err, rows) => {
+        if (err) return res.status(500).json({ error: 'Database error' });
+        res.json(rows);
+      });
+  } else {
+    // Investigators / Police Officers / Medical Entry Officers only see themselves
+    db.all(`SELECT id, service_number, full_name, role, station, email, phone,
+              is_active, created_at, last_login FROM users WHERE id = ? ORDER BY full_name`,
+      [req.user.id], (err, rows) => {
+        if (err) return res.status(500).json({ error: 'Database error' });
+        res.json(rows);
+      });
+  }
 });
 
 app.post('/api/users', requireAuth, requireAdmin,
   [
     body('service_number').trim().notEmpty().withMessage('Service number is required'),
     body('password').isLength({min:6}).withMessage('Password must be at least 6 characters'),
-    body('full_name').trim().notEmpty().withMessage('Full name is required'),
-    body('role').isIn(['Admin','Investigator','Commander','Data Entry']).withMessage('Invalid role'),
+    body('full_name').trim().notEmpty().withMessage('Full name is required')
+      .matches(/^[A-Za-z\s]+$/).withMessage('Full name must contain letters only, no numbers'),
+    body('role').isIn(['Admin','Investigator','Commander','Police Officer','Medical Entry Officer']).withMessage('Invalid role'),
   ],
   async (req, res) => {
     if (!validate(req, res)) return;
@@ -1050,7 +1283,7 @@ app.post('/api/users', requireAuth, requireAdmin,
           if (err.code === 'SQLITE_CONSTRAINT' && err.message.includes('UNIQUE'))
             return res.status(400).json({ error: 'User with this service number already exists' });
           if (err.code === 'SQLITE_CONSTRAINT')
-            return res.status(400).json({ error: 'Invalid role. Must be Admin, Investigator, Commander, or Data Entry' });
+            return res.status(400).json({ error: 'Invalid role. Must be Admin, Investigator, Commander, Police Officer, or Medical Entry Officer' });
           return res.status(500).json({ error: 'Failed to create user' });
         }
         logAudit(req.user.id, req.user.service_number, 'USER_CREATE', 'users', this.lastID,
@@ -1061,6 +1294,8 @@ app.post('/api/users', requireAuth, requireAdmin,
 );
 
 app.put('/api/users/:id', requireAuth, requireAdmin, (req, res) => {
+  if (req.body.full_name && /[0-9]/.test(req.body.full_name))
+    return res.status(400).json({ error: 'Full name must contain letters only, no numbers' });
   const ALLOWED = ['full_name','role','station','email','phone'];
   const safe = Object.keys(req.body).filter(k => ALLOWED.includes(k));
   if (!safe.length) return res.status(400).json({ error: 'No valid fields' });

@@ -106,9 +106,15 @@ body { font-family: 'Sora', sans-serif; }
           Sign In to GBV MIS
         </button>
       </div>
-      <div class="mt-6 pt-5 border-t border-white border-opacity-10 text-center space-y-1">
+      <div class="mt-6 pt-5 border-t border-white border-opacity-10 text-center space-y-2">
         <p class="text-blue-300 text-xs">Authorized personnel only. All access is monitored and logged.</p>
         <p class="text-blue-400 text-xs opacity-70">GBV MIS v2.0 &mdash; Rwanda National Police &copy; 2025</p>
+        <a href="/" class="inline-flex items-center gap-1.5 text-blue-300 hover:text-rnp-gold text-xs transition-colors mt-1">
+          <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"/>
+          </svg>
+          Back to Homepage
+        </a>
       </div>
     </div>
   </div>
@@ -242,6 +248,23 @@ body { font-family: 'Sora', sans-serif; }
           <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
           <span class="hidden sm:inline">New Case</span>
         </button>
+        <!-- Notification Bell -->
+        <div class="relative no-print" id="notif-wrapper">
+          <button onclick="toggleNotifPanel()" class="relative p-2 rounded-xl hover:bg-gray-100 transition-all" title="Notifications">
+            <svg class="w-5 h-5 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"/></svg>
+            <span id="notif-badge" class="hidden absolute -top-0.5 -right-0.5 w-4 h-4 bg-rnp-red text-white text-xs font-bold rounded-full flex items-center justify-center leading-none">0</span>
+          </button>
+          <!-- Notification Dropdown Panel -->
+          <div id="notif-panel" class="hidden absolute right-0 top-12 w-80 md:w-96 bg-white rounded-2xl shadow-2xl border border-gray-100 z-50 overflow-hidden">
+            <div class="flex items-center justify-between px-4 py-3 border-b border-gray-100 bg-gray-50">
+              <span class="font-bold text-gray-800 text-sm">Notifications</span>
+              <button onclick="markAllNotifsRead()" class="text-xs text-rnp-light hover:text-rnp-blue font-semibold transition-colors">Mark all read</button>
+            </div>
+            <div id="notif-list" class="overflow-y-auto" style="max-height:380px;">
+              <div class="px-4 py-8 text-center text-gray-400 text-sm">Loading...</div>
+            </div>
+          </div>
+        </div>
       </div>
     </div>
 
@@ -529,7 +552,7 @@ body { font-family: 'Sora', sans-serif; }
                     </select>
                   </div>
                   <div>
-                    <label class="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1.5">Assign To Officer</label>
+                    <label class="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1.5">Assign To Police Officer</label>
                     <select name="assigned_to" id="assign-officer-select" class="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-rnp-light bg-gray-50">
                       <option value="">Unassigned</option>
                     </select>
@@ -1008,7 +1031,7 @@ body { font-family: 'Sora', sans-serif; }
       <div class="grid grid-cols-2 gap-4">
         <div class="col-span-2">
           <label class="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1.5">Full Name *</label>
-          <input type="text" id="edit-full-name" name="full_name" required placeholder="Officer full name" class="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-rnp-light bg-gray-50">
+          <input type="text" id="edit-full-name" name="full_name" required placeholder="Officer full name" pattern="[A-Za-z\s]+" title="Full name must contain letters only, no numbers" oninput="this.value=this.value.replace(/[0-9]/g,'')" class="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-rnp-light bg-gray-50">
         </div>
         <div class="col-span-2">
           <label class="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1.5">Service Number</label>
@@ -1022,8 +1045,8 @@ body { font-family: 'Sora', sans-serif; }
             <option>Admin</option>
             <option>Commander</option>
             <option>Investigator</option>
-            <option>Officer</option>
-            <option>Data Entry</option>
+            <option>Police Officer</option>
+            <option>Medical Entry Officer</option>
           </select>
         </div>
         <div>
@@ -1060,7 +1083,7 @@ body { font-family: 'Sora', sans-serif; }
       <div class="grid grid-cols-2 gap-4">
         <div class="col-span-2">
           <label class="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1.5">Full Name *</label>
-          <input type="text" name="full_name" required placeholder="Officer full name" class="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-rnp-light bg-gray-50">
+          <input type="text" name="full_name" required placeholder="Officer full name" pattern="[A-Za-z\s]+" title="Full name must contain letters only, no numbers" oninput="this.value=this.value.replace(/[0-9]/g,'')" class="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-rnp-light bg-gray-50">
         </div>
         <div>
           <label class="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1.5">Service Number *</label>
@@ -1073,8 +1096,8 @@ body { font-family: 'Sora', sans-serif; }
             <option>Admin</option>
             <option>Commander</option>
             <option>Investigator</option>
-            <option>Officer</option>
-            <option>Data Entry</option>
+            <option>Police Officer</option>
+            <option>Medical Entry Officer</option>
           </select>
         </div>
         <div>
@@ -1193,8 +1216,14 @@ body { font-family: 'Sora', sans-serif; }
             </tbody>
           </table>
         </div>
-        <div class="border-t border-gray-100 pt-4">
-          <h4 class="font-semibold text-gray-700 text-sm mb-3">Upload Evidence</h4>
+        <div id="evidence-upload-section" class="border-t border-gray-100 pt-4">
+          <div class="flex items-center gap-2 mb-3">
+            <svg class="w-4 h-4 text-rnp-blue" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"/>
+            </svg>
+            <h4 class="font-semibold text-gray-700 text-sm">Upload Evidence</h4>
+            <span class="ml-auto text-xs bg-blue-50 text-rnp-blue font-semibold px-2 py-0.5 rounded-full" id="evidence-uploader-role"></span>
+          </div>
           <div class="space-y-3">
             <div class="grid grid-cols-2 gap-3">
               <div>
@@ -1219,7 +1248,12 @@ body { font-family: 'Sora', sans-serif; }
               <label class="block text-xs font-semibold text-gray-400 uppercase tracking-wide mb-1.5">Description</label>
               <input type="text" id="evidence-desc-input" placeholder="Brief description of evidence" class="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-rnp-light bg-gray-50">
             </div>
-            <button onclick="uploadEvidence()" class="bg-rnp-blue hover:bg-rnp-mid text-white text-sm font-semibold px-5 py-2.5 rounded-xl transition-all">Upload Evidence</button>
+            <button onclick="uploadEvidence()" class="bg-rnp-blue hover:bg-rnp-mid text-white text-sm font-semibold px-5 py-2.5 rounded-xl transition-all flex items-center gap-2">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"/>
+              </svg>
+              Upload Evidence
+            </button>
           </div>
         </div>
       </div>
@@ -1313,8 +1347,8 @@ body { font-family: 'Sora', sans-serif; }
             <option>Urgent</option>
           </select>
         </div>
-        <div class="col-span-2">
-          <label class="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1.5">Assigned Officer</label>
+        <div class="col-span-2" id="assign-row-update">
+          <label class="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1.5">Assigned Police Officer</label>
           <select name="assigned_to" id="assigned-officer-select" class="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-rnp-light bg-gray-50">
             <option value="">Unassigned</option>
           </select>
@@ -1438,6 +1472,7 @@ async function doLogin() {
 }
 
 async function doLogout() {
+  stopNotifPolling();
   try { await apiCall('/logout', 'POST'); } catch(e) {}
   clearSession();
   showLoginScreen();
@@ -1457,6 +1492,7 @@ async function initApp() {
   await Promise.all([loadCases(), loadUsers()]);
   renderAll();
   nav('dashboard');
+  startNotifPolling();
 }
 
 // ======================== LOAD DATA ========================
@@ -1703,16 +1739,16 @@ async function showCaseDetail(id) {
         <div><span class="text-gray-400 text-xs uppercase tracking-wide">Assigned To</span><p class="font-medium mt-0.5">${c.assigned_to_name || 'Unassigned'}</p></div>
         <div class="col-span-2"><span class="text-gray-400 text-xs uppercase tracking-wide">Description</span><p class="mt-0.5 text-gray-600 leading-relaxed">${c.incident_description || '—'}</p></div>
         <div class="col-span-2 border-t border-gray-100 pt-3 mt-1">
-          <p class="text-xs font-semibold uppercase tracking-wide text-gray-400 mb-2">Survivor${currentUser && currentUser.role !== 'Admin' ? ' (Confidential)' : ''}</p>
+          <p class="text-xs font-semibold uppercase tracking-wide text-gray-400 mb-2">Survivor${currentUser && !['Admin','Commander'].includes(currentUser.role) ? ' (Confidential)' : ''}</p>
         </div>
-        ${currentUser && currentUser.role === 'Admin' ? `<div class="col-span-2"><span class="text-gray-400 text-xs">Full Name</span><p class="font-medium mt-0.5">${c.victim_name || '—'}</p></div>` : ''}
+        ${currentUser && ['Admin','Commander'].includes(currentUser.role) ? `<div class="col-span-2"><span class="text-gray-400 text-xs">Full Name</span><p class="font-medium mt-0.5">${c.victim_name || '—'}</p></div>` : ''}
         <div><span class="text-gray-400 text-xs">Gender</span><p class="font-medium mt-0.5">${c.victim_gender || '—'}</p></div>
         <div><span class="text-gray-400 text-xs">Age</span><p class="font-medium mt-0.5">${c.victim_age || '—'}</p></div>
         <div class="col-span-2 border-t border-gray-100 pt-3 mt-1">
-          <p class="text-xs font-semibold uppercase tracking-wide text-gray-400 mb-2">Suspect</p>
+          <p class="text-xs font-semibold uppercase tracking-wide text-gray-400 mb-2">Suspect${currentUser && !['Admin','Commander'].includes(currentUser.role) ? ' (Confidential)' : ''}</p>
         </div>
-        <div><span class="text-gray-400 text-xs">Name</span><p class="font-medium mt-0.5">${c.suspect_name || 'Unknown'}</p></div>
-        <div><span class="text-gray-400 text-xs">Relationship</span><p class="font-medium mt-0.5">${c.relationship_to_victim || '—'}</p></div>
+        <div><span class="text-gray-400 text-xs">Name</span><p class="font-medium mt-0.5">${currentUser && ['Admin','Commander'].includes(currentUser.role) ? (c.suspect_name || 'Unknown') : '[Confidential]'}</p></div>
+        <div><span class="text-gray-400 text-xs">Relationship</span><p class="font-medium mt-0.5">${currentUser && ['Admin','Commander'].includes(currentUser.role) ? (c.relationship_to_victim || '—') : '—'}</p></div>
       </div>`;
     document.getElementById('detail-update-btn').onclick = () => openUpdateModal(c);
   } catch(e) {
@@ -1763,6 +1799,13 @@ async function addCaseNote() {
 }
 
 async function loadDetailEvidence() {
+  // Show/hide upload section and tag role badge based on permissions
+  const canUpload = currentUser && ['Admin','Commander','Investigator','Police Officer','Medical Entry Officer'].includes(currentUser.role);
+  const uploadSection = document.getElementById('evidence-upload-section');
+  const roleTag       = document.getElementById('evidence-uploader-role');
+  if (uploadSection) uploadSection.style.display = canUpload ? '' : 'none';
+  if (roleTag && currentUser) roleTag.textContent = currentUser.role;
+
   const tbody = document.getElementById('detail-evidence-tbody');
   tbody.innerHTML = '<tr><td colspan="6" class="text-center py-4 text-gray-400 text-sm">Loading...</td></tr>';
   try {
@@ -1876,10 +1919,14 @@ async function updateReferralStatus(id, status) {
 function openUpdateModal(caseData) {
   closeModal('case-detail-modal');
   const sel = document.getElementById('assigned-officer-select');
+  const canAssign = currentUser && ['Admin','Commander'].includes(currentUser.role);
+  const officers = getAssignableOfficers();
   sel.innerHTML = '<option value="">Unassigned</option>' +
-    USERS.filter(u => ['Investigator','Commander','Admin'].includes(u.role))
-         .map(u => `<option value="${u.id}" ${caseData.assigned_to === u.id ? 'selected' : ''}>${u.full_name} (${u.role})</option>`)
-         .join('');
+    officers.map(u => `<option value="${u.id}" ${caseData.assigned_to === u.id ? 'selected' : ''}>${u.full_name} (${u.role})</option>`)
+            .join('');
+  // Hide assign row for non-admins/commanders
+  const assignRow = document.getElementById('assign-row-update');
+  if (assignRow) assignRow.style.display = canAssign ? '' : 'none';
   document.getElementById('update-status').value   = caseData.status || 'Open';
   document.getElementById('update-priority').value = caseData.priority || 'Normal';
   openModal('update-case-modal');
@@ -1968,14 +2015,15 @@ async function addInvLog() {
 async function loadSurvivors() {
   const tbody = document.getElementById('survivors-tbody');
   tbody.innerHTML = '<tr><td colspan="7" class="text-center py-4 text-gray-400">Loading...</td></tr>';
+  const canSeeNames = currentUser && ['Admin','Commander'].includes(currentUser.role);
   const banner = document.getElementById('survivor-conf-banner');
-  if (banner) banner.style.display = currentUser && currentUser.role === 'Admin' ? 'none' : '';
+  if (banner) banner.style.display = canSeeNames ? 'none' : '';
   try {
     const rows = await apiCall('/survivors');
     tbody.innerHTML = rows.length ? rows.map(r => `
       <tr class="hover:bg-gray-50 border-b border-gray-100 last:border-0">
         <td class="px-4 py-3 font-mono text-xs text-rnp-light">SUR-${String(r.id).padStart(4,'0')}</td>
-        <td class="px-4 py-3 text-sm ${currentUser && currentUser.role === 'Admin' ? 'font-medium' : 'text-gray-400 italic'}">${currentUser && currentUser.role === 'Admin' ? (r.victim_name || '—') : '[Confidential]'}</td>
+        <td class="px-4 py-3 text-sm ${canSeeNames ? 'font-medium' : 'text-gray-400 italic'}">${canSeeNames ? (r.victim_name || '—') : '[Confidential]'}</td>
         <td class="px-4 py-3 text-sm">${r.victim_gender || '—'}</td>
         <td class="px-4 py-3 text-sm">${r.victim_age || '—'}</td>
         <td class="px-4 py-3 text-sm text-gray-500">${r.district || '—'}</td>
@@ -1991,15 +2039,16 @@ async function loadSurvivors() {
 async function loadSuspects() {
   const tbody = document.getElementById('suspects-tbody');
   tbody.innerHTML = '<tr><td colspan="7" class="text-center py-4 text-gray-400">Loading...</td></tr>';
+  const canSeeDetails = currentUser && ['Admin','Commander'].includes(currentUser.role);
   try {
     const rows = await apiCall('/suspects');
     tbody.innerHTML = rows.length ? rows.map(r => `
       <tr class="hover:bg-gray-50 border-b border-gray-100 last:border-0">
         <td class="px-4 py-3 font-mono text-xs text-rnp-light">SUS-${String(r.id).padStart(4,'0')}</td>
-        <td class="px-4 py-3 text-sm font-medium">${r.suspect_name || 'Unknown'}</td>
+        <td class="px-4 py-3 text-sm font-medium">${canSeeDetails ? (r.suspect_name || 'Unknown') : '[Confidential]'}</td>
         <td class="px-4 py-3 text-sm">${r.suspect_gender || '—'}</td>
         <td class="px-4 py-3 text-sm">${r.suspect_age || '—'}</td>
-        <td class="px-4 py-3 text-sm text-gray-500">${r.relationship_to_victim || '—'}</td>
+        <td class="px-4 py-3 text-sm text-gray-500">${canSeeDetails ? (r.relationship_to_victim || '—') : '—'}</td>
         <td class="px-4 py-3 font-mono text-xs text-rnp-light">${r.case_number}</td>
         <td class="px-4 py-3">${statusBadge(r.status)}</td>
       </tr>`).join('')
@@ -2187,12 +2236,23 @@ function autoFillOfficer() {
   if (idEl)   idEl.value   = currentUser.service_number;
 }
 
+function getAssignableOfficers() {
+  const canAssign = currentUser && ['Admin','Commander'].includes(currentUser.role);
+  if (canAssign) {
+    // Admin/Commander can assign to Investigators and Police Officers
+    return USERS.filter(u => ['Investigator','Police Officer','Commander','Admin'].includes(u.role) && u.is_active !== 0);
+  } else {
+    // Other roles can only assign to themselves
+    return USERS.filter(u => u.id === currentUser.id);
+  }
+}
+
 function populateAssignSelect() {
   const sel = document.getElementById('assign-officer-select');
   if (!sel) return;
+  const officers = getAssignableOfficers();
   sel.innerHTML = '<option value="">Unassigned</option>' +
-    USERS.filter(u => ['Investigator','Commander','Admin'].includes(u.role))
-         .map(u => `<option value="${u.id}">${u.full_name} (${u.role})</option>`).join('');
+    officers.map(u => `<option value="${u.id}">${u.full_name} (${u.role})</option>`).join('');
 }
 
 // ======================== MODAL HELPERS ========================
@@ -2242,6 +2302,145 @@ window.addEventListener('resize', () => {
     overlay.classList.remove('show');
   }
 });
+
+// ======================== NOTIFICATIONS ========================
+let NOTIFICATIONS = [];
+let notifPanelOpen = false;
+let notifPollInterval = null;
+
+function notifTypeIcon(type) {
+  return { assignment:'📌', update:'📝', alert:'⚠️', info:'📋' }[type] || '🔔';
+}
+function notifTypeBg(type, isRead) {
+  if (isRead) return 'bg-white';
+  return { assignment:'bg-blue-50', update:'bg-amber-50', alert:'bg-red-50', info:'bg-gray-50' }[type] || 'bg-gray-50';
+}
+
+async function loadNotifications() {
+  try {
+    NOTIFICATIONS = await apiCall('/notifications');
+    renderNotifList();
+    updateNotifBadge();
+  } catch(e) { /* silent */ }
+}
+
+async function pollNotifCount() {
+  try {
+    const { count } = await apiCall('/notifications/count');
+    const badge = document.getElementById('notif-badge');
+    if (!badge) return;
+    if (count > 0) {
+      badge.textContent = count > 99 ? '99+' : count;
+      badge.classList.remove('hidden');
+    } else {
+      badge.classList.add('hidden');
+    }
+    // If panel is open, refresh full list
+    if (notifPanelOpen) loadNotifications();
+  } catch(e) { /* silent */ }
+}
+
+function updateNotifBadge() {
+  const unread = NOTIFICATIONS.filter(n => !n.is_read).length;
+  const badge = document.getElementById('notif-badge');
+  if (!badge) return;
+  if (unread > 0) {
+    badge.textContent = unread > 99 ? '99+' : unread;
+    badge.classList.remove('hidden');
+  } else {
+    badge.classList.add('hidden');
+  }
+}
+
+function renderNotifList() {
+  const list = document.getElementById('notif-list');
+  if (!list) return;
+  if (!NOTIFICATIONS.length) {
+    list.innerHTML = '<div class="px-4 py-8 text-center text-gray-400 text-sm">No notifications yet</div>';
+    return;
+  }
+  list.innerHTML = NOTIFICATIONS.map(n => `
+    <div class="flex gap-3 px-4 py-3 border-b border-gray-50 cursor-pointer transition-colors hover:bg-gray-50 ${notifTypeBg(n.type, n.is_read)}"
+         onclick="handleNotifClick(${n.id}, ${n.case_id || 'null'})">
+      <div class="text-lg flex-shrink-0 mt-0.5">${notifTypeIcon(n.type)}</div>
+      <div class="flex-1 min-w-0">
+        <div class="flex items-start justify-between gap-2">
+          <p class="text-sm font-semibold text-gray-800 leading-tight ${n.is_read ? 'font-medium text-gray-600' : ''}">${n.title}</p>
+          ${!n.is_read ? '<span class="w-2 h-2 rounded-full bg-rnp-light flex-shrink-0 mt-1"></span>' : ''}
+        </div>
+        <p class="text-xs text-gray-500 mt-0.5 leading-relaxed line-clamp-2">${n.message}</p>
+        <p class="text-xs text-gray-400 mt-1">${timeAgo(n.created_at)}</p>
+      </div>
+    </div>`).join('');
+}
+
+async function handleNotifClick(notifId, caseId) {
+  // Mark as read
+  try { await apiCall(`/notifications/${notifId}/read`, 'PUT'); } catch(e) {}
+  const notif = NOTIFICATIONS.find(n => n.id === notifId);
+  if (notif) notif.is_read = 1;
+  renderNotifList();
+  updateNotifBadge();
+  // Navigate to case if applicable
+  if (caseId) {
+    closeNotifPanel();
+    const c = CASES.find(x => x.dbId === caseId);
+    if (c) openCaseDetail(c.rawData);
+    else { await loadCases(); renderAll(); }
+  }
+}
+
+async function markAllNotifsRead() {
+  try {
+    await apiCall('/notifications/read-all', 'PUT');
+    NOTIFICATIONS.forEach(n => n.is_read = 1);
+    renderNotifList();
+    updateNotifBadge();
+  } catch(e) { /* silent */ }
+}
+
+function toggleNotifPanel() {
+  const panel = document.getElementById('notif-panel');
+  notifPanelOpen = !notifPanelOpen;
+  if (notifPanelOpen) {
+    panel.classList.remove('hidden');
+    loadNotifications();
+  } else {
+    panel.classList.add('hidden');
+  }
+}
+
+function closeNotifPanel() {
+  notifPanelOpen = false;
+  const panel = document.getElementById('notif-panel');
+  if (panel) panel.classList.add('hidden');
+}
+
+// Close notif panel when clicking outside
+document.addEventListener('click', (e) => {
+  const wrapper = document.getElementById('notif-wrapper');
+  if (wrapper && !wrapper.contains(e.target)) closeNotifPanel();
+});
+
+function timeAgo(dateStr) {
+  if (!dateStr) return '';
+  const diff = Math.floor((Date.now() - new Date(dateStr)) / 1000);
+  if (diff < 60)   return 'Just now';
+  if (diff < 3600) return `${Math.floor(diff/60)}m ago`;
+  if (diff < 86400)return `${Math.floor(diff/3600)}h ago`;
+  return `${Math.floor(diff/86400)}d ago`;
+}
+
+// Start notification polling after login (every 60s)
+function startNotifPolling() {
+  if (notifPollInterval) clearInterval(notifPollInterval);
+  pollNotifCount(); // immediate first check
+  notifPollInterval = setInterval(pollNotifCount, 60000);
+}
+function stopNotifPolling() {
+  if (notifPollInterval) clearInterval(notifPollInterval);
+  notifPollInterval = null;
+}
 </script>
 </body>
 </html>
